@@ -16,15 +16,21 @@ class NNLayer {
     std::default_random_engine generator;
     std::normal_distribution<double> distribution;
 
-    NNLayer(int n_rows, int n_cols, bool is_input, bool is_output) {
+    NNLayer(int batchsize, int n_rows, int n_cols, bool is_input, bool is_output) {
 	n_cols++;
 	weights = S = Z = F = NULL;
 	next = prev = NULL;
+	this->batchsize = batchsize;
 	this->n_cols = n_cols;
 	this->n_rows = n_rows;
 	this->is_input = is_input;
 	this->is_output = is_output;
 	distribution = std::normal_distribution<double>(-1, 1);
+
+	if (is_input) {
+	    AllocateMemory(&input, IMAGE_X*IMAGE_Y*batchsize);
+	}
+
 	AllocateMemory(&S, n_rows * n_cols);
 	InitializeGaussian(S, n_rows * n_cols);
 	AllocateMemory(&weights, n_rows * n_cols);
@@ -42,11 +48,15 @@ class NNLayer {
 
     void ForwardPropagate(uchar **images) {
 	if (is_input) {
-	    InputCopyStridedToZ(images);
+	    InputCopyStridedToInput(images);
+	}
+	else if (is_output) {
+
 	}
 	else {
 
 	}
+
 	if (next) {
 	    next->ForwardPropagate(images);
 	}
@@ -57,15 +67,16 @@ class NNLayer {
 	if (S != NULL) free(S);
 	if (Z != NULL) free(Z);
 	if (F != NULL) free(F);
+	if (input != NULL) free(input);
     }
 
  private:
 
     // Note that n_cols does account for the implicit column of noes
     // for the bias.
-    int n_cols, n_rows;
+    int n_cols, n_rows, batchsize;
     bool is_input, is_output;
-    double *weights, *S, *Z, *F;
+    double *weights, *S, *Z, *F, *input;
     NNLayer *next, *prev;
 
     void AllocateMemory(double **ptr, int sz) {
@@ -85,12 +96,10 @@ class NNLayer {
 	}
     }
 
-    void InputCopyStridedToZ(uchar **images) {
-	for (int i = 0; i < n_rows; i++) {
-	    double *z_cur = &Z[i*n_cols];
-	    uchar *imagez_cur = images[i];
-	    for (int j = 0; j < n_cols-1; j++) {
-		z_cur[j] = imagez_cur[j];
+    void InputCopyStridedToInput(uchar **images) {
+	for (int i = 0; i < batchsize; i++) {
+	    for (int j = 0; j < IMAGE_X*IMAGE_Y; j++) {
+		input[i * IMAGE_X*IMAGE_Y + j] = images[i][j];
 	    }
 	}
     }

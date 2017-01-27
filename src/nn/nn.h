@@ -11,10 +11,12 @@ class NN {
  public:
     NN(NNParams *params, int batchsize) {
 	params->Validate(batchsize, N_CLASSES);
-	for (int i = 0; i < params->GetLayers().size(); i++) {
+	for (int i = 0; i < params->GetLayers().size()-1; i++) {
 	    std::pair<int, int> layer = params->GetLayers()[i];
-	    layers.push_back(new NNLayer(layer.first, layer.second, i==0,
-					 i==params->GetLayers().size()-1));
+	    std::pair<int, int> next_layer = params->GetLayers()[i+1];
+	    layers.push_back(new NNLayer(batchsize,
+					 layer.second, next_layer.first, i==0,
+					 i==params->GetLayers().size()-2));
 	}
 	for (int i = 0; i < layers.size(); i++) {
 	    NNLayer *prev = i == 0 ? NULL : layers[i-1];
