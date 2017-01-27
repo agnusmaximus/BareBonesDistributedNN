@@ -23,23 +23,21 @@ class NNLayer {
 	this->step = step;
 	this->batchsize = batchsize;
 	this->n_cols = n_cols;
-	this->n_rows = n_rows;
 	this->is_input = is_input;
 	this->is_output = is_output;
 	distribution = std::normal_distribution<double>(-1, 1);
 
-	if (is_input) {
-	    AllocateMemory(&input, IMAGE_X*IMAGE_Y*batchsize);
-	}
+	if (is_output) return;
 
-	AllocateMemory(&S, n_rows * n_cols);
-	InitializeGaussian(S, n_rows * n_cols);
-	AllocateMemory(&weights, n_rows * n_cols);
-	InitializeGaussian(weights, n_rows * n_cols);
-	AllocateMemory(&Z, n_rows * n_cols);
-	InitializeGaussian(Z, n_rows * n_cols);
-	AllocateMemory(&F, n_rows * n_cols);
-	InitializeGaussian(F, n_rows * n_cols);
+	AllocateMemory(&input, IMAGE_X*IMAGE_Y*batchsize);
+	AllocateMemory(&S, batchsize * n_cols);
+	InitializeGaussian(S, batchsize * n_cols);
+	AllocateMemory(&weights, batchsize * n_cols);
+	InitializeGaussian(weights, batchsize * n_cols);
+	AllocateMemory(&Z, batchsize * n_cols);
+	InitializeGaussian(Z, batchsize * n_cols);
+	AllocateMemory(&F, batchsize * n_cols);
+	InitializeGaussian(F, batchsize * n_cols);
     }
 
     void WireLayers(NNLayer *prev, NNLayer *next) {
@@ -57,10 +55,7 @@ class NNLayer {
 			input, IMAGE_X*IMAGE_Y,
 			weights, n_cols,
 			1,
-			S, n_cols);
-	}
-	else if (is_output) {
-
+			next->S, n_cols);
 	}
 	else {
 
@@ -83,7 +78,7 @@ class NNLayer {
 
     // Note that n_cols does account for the implicit column of noes
     // for the bias.
-    int n_cols, n_rows, batchsize, step;
+    int n_cols, batchsize, step;
     bool is_input, is_output;
     double *weights, *S, *Z, *F, *input;
     NNLayer *next, *prev;
@@ -100,7 +95,7 @@ class NNLayer {
 	for (int i = 0; i < n_elements; i++) {
 	    ptr[i] = distribution(generator);
 	}
-	for (int i = 0; i < n_rows; i++) {
+	for (int i = 0; i < batchsize; i++) {
 	    ptr[i * n_cols + n_cols - 1] = 1;
 	}
     }
@@ -114,7 +109,7 @@ class NNLayer {
     }
 
     void AssertBiasColumnIsOne(double *ptr) {
-	for (int i = 0; i < n_rows; i++) {
+	for (int i = 0; i < batchsize; i++) {
 	    assert(ptr[i * n_cols + n_cols - 1] == 1);
 	}
     }
