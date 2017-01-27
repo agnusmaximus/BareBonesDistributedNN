@@ -16,10 +16,11 @@ class NNLayer {
     std::default_random_engine generator;
     std::normal_distribution<double> distribution;
 
-    NNLayer(int batchsize, int n_rows, int n_cols, bool is_input, bool is_output) {
+    NNLayer(int batchsize, int n_rows, int n_cols, bool is_input, bool is_output, int step) {
 	n_cols++;
 	weights = S = Z = F = NULL;
 	next = prev = NULL;
+	this->step = step;
 	this->batchsize = batchsize;
 	this->n_cols = n_cols;
 	this->n_rows = n_rows;
@@ -48,7 +49,15 @@ class NNLayer {
 
     void ForwardPropagate(uchar **images) {
 	if (is_input) {
+	    // Compute S = Input * W
 	    InputCopyStridedToInput(images);
+	    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+			batchsize, n_cols, IMAGE_X*IMAGE_Y,
+			1,
+			input, IMAGE_X*IMAGE_Y,
+			weights, n_cols,
+			1,
+			S, n_cols);
 	}
 	else if (is_output) {
 
@@ -74,7 +83,7 @@ class NNLayer {
 
     // Note that n_cols does account for the implicit column of noes
     // for the bias.
-    int n_cols, n_rows, batchsize;
+    int n_cols, n_rows, batchsize, step;
     bool is_input, is_output;
     double *weights, *S, *Z, *F, *input;
     NNLayer *next, *prev;

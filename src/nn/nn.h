@@ -15,8 +15,8 @@ class NN {
 	    std::pair<int, int> layer = params->GetLayers()[i];
 	    std::pair<int, int> next_layer = params->GetLayers()[i+1];
 	    layers.push_back(new NNLayer(batchsize,
-					 layer.second, next_layer.first, i==0,
-					 i==params->GetLayers().size()-2));
+					 layer.second, next_layer.second, i==0,
+					 i==params->GetLayers().size()-2, 0));
 	}
 	for (int i = 0; i < layers.size(); i++) {
 	    NNLayer *prev = i == 0 ? NULL : layers[i-1];
