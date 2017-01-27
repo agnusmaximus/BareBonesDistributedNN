@@ -1,3 +1,6 @@
+#ifndef _MNIST_
+#define _MNIST_
+
 #include <iostream>
 #include <cassert>
 #include <string>
@@ -13,7 +16,9 @@ typedef unsigned char uchar;
 #define TRAINING_LABELS "./data/train-labels-idx1-ubyte"
 #define TEST_IMAGES "./data/t10k-images-idx3-ubyte"
 #define TEST_LABELS "./data/t10k-labels-idx1-ubyte"
-#define IMAGE_DIM (28*28)
+#define IMAGE_X 28
+#define IMAGE_Y 28
+#define N_CLASSES 10
 
 int reverseInt(int i) {
     unsigned char c1, c2, c3, c4;
@@ -83,7 +88,7 @@ void test_load_images(string path, int n_expected) {
     int image_size = 0;
     uchar** dataset = read_mnist_images(path, n_images_found, image_size);
     assert(n_expected == n_images_found);
-    assert(image_size == IMAGE_DIM);
+    assert(image_size == IMAGE_X*IMAGE_Y);
 }
 
 void test_load_labels(string path, int n_expected) {
@@ -100,3 +105,5 @@ void test_load_data() {
     test_load_labels(TEST_LABELS, 10000);
     std::cout << "Test succeeded!" << std::endl;
 }
+
+#endif

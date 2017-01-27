@@ -1,3 +1,6 @@
+#ifndef _NN_PARAMS_
+#define _NN_PARAMS_
+
 #include <iostream>
 #include <vector>
 
@@ -50,3 +53,5 @@ class NNParams {
     }
 
 };
+
+#endif
