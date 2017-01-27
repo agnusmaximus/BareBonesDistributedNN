@@ -1,9 +1,13 @@
 #include <iostream>
-#include "mnist.h"
-#include "nn.h"
+#include "mnist/mnist.h"
+#include "nn/nn.h"
 
 using namespace std;
 
+void test() {
+    test_load_data();
+    test_nn();
+}
+
 int main(void) {
-    nn_test();
 }

@@ -4,7 +4,6 @@
 using namespace std;
 
 class ParamsNN {
-
  public:
 
     ParamsNN() {
@@ -42,7 +41,6 @@ class ParamsNN {
 
     std::vector<pair<int, int> > layers;
 
-
     void LayerInputDimensionWrong(int index, int expected) {
 	std::cout << "Input dimension for nn is " << layers[index].first << " expected: " << expected << std::endl;
 	exit(-1);
@@ -55,12 +53,31 @@ class ParamsNN {
 
 };
 
-void nn_test() {
+class NN {
+ public:
+    NN(const ParamsNN &params) {
+
+    }
+
+    ~NN() {
+
+    }
+};
+
+void test_nn() {
+
+    std::cout << "Testing nn..." << std::endl;
 
     ParamsNN *params = new ParamsNN();
     params->AddLayer(128, 300);
     params->AddLayer(300, 400);
     params->AddLayer(400, 10);
     params->Validate(128, 10);
+
+    NN *nn = new NN(*params);
+
+
     delete params;
+
+    std::cout << "Done testing nn!" << std::endl;
 }
