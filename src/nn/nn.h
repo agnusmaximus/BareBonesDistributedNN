@@ -11,16 +11,17 @@ class NN {
  public:
     NN(NNParams *params, int batchsize) {
 	params->Validate(batchsize, N_CLASSES);
-	layers.push_back(new NNLayer(batchsize, batchsize, IMAGE_X*IMAGE_Y, true,
-				     false, 0));
 	for (int i = 0; i < params->GetLayers().size()-1; i++) {
 	    std::pair<int, int> layer = params->GetLayers()[i];
 	    std::pair<int, int> next_layer = params->GetLayers()[i+1];
 	    layers.push_back(new NNLayer(batchsize,
-					 layer.second, next_layer.second, false,
+					 layer.second, next_layer.second,
+					 i == 0,
 					 false, 0));
 	}
-	layers.push_back(new NNLayer(batchsize, N_CLASSES, -1, false,
+	layers.push_back(new NNLayer(batchsize,
+				     params->GetLayers()[params->GetLayers().size()-1].second, -1,
+				     false,
 				     true, 0));
 	for (int i = 0; i < layers.size(); i++) {
 	    NNLayer *prev = i == 0 ? NULL : layers[i-1];
@@ -45,7 +46,7 @@ class NN {
 
 void test_nn() {
 
-    std::cout << "Testing nn..." << std::endl;
+    std::cout << "Test nn..." << std::endl;
 
     NNParams *params = new NNParams();
     int batch_size = 128;
@@ -60,7 +61,7 @@ void test_nn() {
     delete nn;
     delete params;
 
-    std::cout << "Done testing nn!" << std::endl;
+    std::cout << "Test succeeded!" << std::endl;
 }
 
 #endif

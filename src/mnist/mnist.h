@@ -97,6 +97,15 @@ void test_load_labels(string path, int n_expected) {
     assert(n_expected == n_labels_found);
 }
 
+void MNISTImageToInput(int batchsize, uchar **images, double *output) {
+    for (int i = 0; i < batchsize; i++) {
+	for (int j = 0; j < IMAGE_X*IMAGE_Y; j++) {
+	    output[i * IMAGE_X*IMAGE_Y + j] = images[i][j];
+	}
+    }
+}
+
+
 void test_load_data() {
     std::cout << "Test loading mnist data..." << std::endl;
     test_load_images(TRAINING_IMAGES, 60000);

@@ -7,6 +7,7 @@
 #include <vector>
 #include <random>
 #include "../mnist/mnist.h"
+#include "../util/util.h"
 
 class NNLayer;
 
@@ -17,27 +18,33 @@ class NNLayer {
     std::normal_distribution<double> distribution;
 
     NNLayer(int batchsize, int n_rows, int n_cols, bool is_input, bool is_output, int step) {
-	n_cols++;
+	std::cout << "Initializing NNLayer of dimension " << n_rows << "x" << n_cols << std::endl;
 	weights = S = Z = F = NULL;
 	next = prev = NULL;
 	this->step = step;
 	this->batchsize = batchsize;
+	this->n_rows = n_rows;
 	this->n_cols = n_cols;
 	this->is_input = is_input;
 	this->is_output = is_output;
 	distribution = std::normal_distribution<double>(-1, 1);
 
-	if (is_output) return;
+	if (is_input) {
+	    AllocateMemory(&input, n_rows*batchsize);
+	}
+	AllocateMemory(&S, n_rows*batchsize);
 
-	AllocateMemory(&input, IMAGE_X*IMAGE_Y*batchsize);
-	AllocateMemory(&S, batchsize * n_cols);
-	InitializeGaussian(S, batchsize * n_cols);
-	AllocateMemory(&weights, batchsize * n_cols);
-	InitializeGaussian(weights, batchsize * n_cols);
-	AllocateMemory(&Z, batchsize * n_cols);
-	InitializeGaussian(Z, batchsize * n_cols);
-	AllocateMemory(&F, batchsize * n_cols);
-	InitializeGaussian(F, batchsize * n_cols);
+	// We add +1 for the bias column.
+	AllocateMemory(&Z, (n_rows+1)*batchsize);
+	AllocateMemory(&F, n_rows*batchsize);
+
+	if (!is_output) {
+
+	    // We add +1 for the bias weights.
+	    int n_rows_to_allocate = is_input ? n_rows : n_rows+1;
+	    AllocateMemory(&weights, n_rows * n_cols);
+	    InitializeGaussian(weights, n_rows_to_allocate * n_cols);
+	}
     }
 
     void WireLayers(NNLayer *prev, NNLayer *next) {
@@ -48,22 +55,28 @@ class NNLayer {
     void ForwardPropagate(uchar **images) {
 	if (is_input) {
 	    // Compute S = Input * W
-	    InputCopyStridedToInput(images);
-	    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-			batchsize, n_cols, IMAGE_X*IMAGE_Y,
-			1,
-			input, IMAGE_X*IMAGE_Y,
-			weights, n_cols,
-			1,
-			next->S, n_cols);
+	    MNISTImageToInput(batchsize, images, input);
+	    MatrixMultiply(input, weights, next->S,
+			   batchsize, n_cols, n_rows,
+			   n_rows, n_cols, n_cols);
 	}
 	else {
+	    // Compute Z_i = f(S_i)
+	    ReluActivation(S, Z, batchsize, n_rows, n_rows, n_rows+1);
 
-	}
+	    if (is_output) {
+		return;
+	    }
 
-	if (next) {
-	    next->ForwardPropagate(images);
+	    // Compute S_j = Z_i W_i
+	    MatrixMultiply(Z, weights, next->S,
+			   batchsize, n_cols, n_rows+1,
+			   n_rows+1, n_cols, n_cols);
+
+	    // Compute F_i = f'_i(S_i)^T
+	    ReluActivationGradient(S, F, batchsize, n_rows, n_rows, n_rows);
 	}
+	next->ForwardPropagate(images);
     }
 
     ~NNLayer() {
@@ -78,42 +91,19 @@ class NNLayer {
 
     // Note that n_cols does account for the implicit column of noes
     // for the bias.
-    int n_cols, batchsize, step;
+    int n_rows, n_cols, batchsize, step;
     bool is_input, is_output;
     double *weights, *S, *Z, *F, *input;
     NNLayer *next, *prev;
-
-    void AllocateMemory(double **ptr, int sz) {
-	*ptr = (double *)malloc(sizeof(double) * sz);
-	if (!*ptr) {
-	    std::cout << "Error allocating memory." << std::endl;
-	    exit(-1);
-	}
-    }
 
     void InitializeGaussian(double *ptr, int n_elements) {
 	for (int i = 0; i < n_elements; i++) {
 	    ptr[i] = distribution(generator);
 	}
-	for (int i = 0; i < batchsize; i++) {
+	for (int i = 0; i < n_rows; i++) {
 	    ptr[i * n_cols + n_cols - 1] = 1;
 	}
     }
-
-    void InputCopyStridedToInput(uchar **images) {
-	for (int i = 0; i < batchsize; i++) {
-	    for (int j = 0; j < IMAGE_X*IMAGE_Y; j++) {
-		input[i * IMAGE_X*IMAGE_Y + j] = images[i][j];
-	    }
-	}
-    }
-
-    void AssertBiasColumnIsOne(double *ptr) {
-	for (int i = 0; i < batchsize; i++) {
-	    assert(ptr[i * n_cols + n_cols - 1] == 1);
-	}
-    }
-
 };
 
 #endif
