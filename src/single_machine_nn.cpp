@@ -1,8 +1,9 @@
 #include <iostream>
 #include "mnist.h"
+#include "nn.h"
 
 using namespace std;
 
 int main(void) {
-    test_load_data();
+    nn_test();
 }

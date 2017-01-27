@@ -1,4 +1,4 @@
-FLAGS=
+FLAGS=-std=c++11
 
 single_machine:
 	g++ $(FLAGS) src/single_machine_nn.cpp -o single_machine
