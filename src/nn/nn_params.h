@@ -1,13 +1,13 @@
 #include <iostream>
 #include <vector>
 
-class ParamsNN {
+class NNParams {
  public:
 
-    ParamsNN() {
+    NNParams() {
     }
 
-    ~ParamsNN() {
+    ~NNParams() {
     }
 
     void AddLayer(int in_layer_dim, int out_layer_dim) {
