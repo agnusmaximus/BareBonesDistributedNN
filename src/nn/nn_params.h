@@ -38,6 +38,10 @@ class NNParams {
 	}
     }
 
+    std::vector<pair<int, int> > & GetLayers() {
+	return layers;
+    }
+
  private:
 
     std::vector<pair<int, int> > layers;

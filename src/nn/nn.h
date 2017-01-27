@@ -11,6 +11,20 @@ class NN {
  public:
     NN(NNParams *params, int batchsize) {
 	params->Validate(batchsize, N_CLASSES);
+	for (int i = 0; i < params->GetLayers().size(); i++) {
+	    std::pair<int, int> layer = params->GetLayers()[i];
+	    layers.push_back(new NNLayer(layer.first, layer.second, i==0,
+					 i==params->GetLayers().size()-1));
+	}
+	for (int i = 0; i < layers.size(); i++) {
+	    NNLayer *prev = i == 0 ? NULL : layers[i-1];
+	    NNLayer *next = i == layers.size()-1 ? NULL : layers[i+1];
+	    layers[i]->WireLayers(prev, next);
+	}
+    }
+
+    void ForwardPropagate(uchar **images) {
+	layers[0]->ForwardPropagate(images);
     }
 
     ~NN() {
@@ -28,11 +42,14 @@ void test_nn() {
     std::cout << "Testing nn..." << std::endl;
 
     NNParams *params = new NNParams();
-    params->AddLayer(128, 300);
-    params->AddLayer(300, 400);
-    params->AddLayer(400, 10);
-
-    NN *nn = new NN(params, 128);
+    int batch_size = 128;
+    params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
+    params->AddLayer(IMAGE_X*IMAGE_Y, 400);
+    params->AddLayer(400, N_CLASSES);
+    NN *nn = new NN(params, batch_size);
+    int number_of_images, image_size;
+    uchar **images = read_mnist_images(TRAINING_IMAGES, number_of_images, image_size);
+    nn->ForwardPropagate(images);
 
     delete nn;
     delete params;
