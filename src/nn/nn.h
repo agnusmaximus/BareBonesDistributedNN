@@ -10,7 +10,7 @@
 
 class NN {
  public:
-    NN(NNParams *params, int batchsize) {
+    NN(NNParams *params, int batchsize, double learning_rate) {
 	this->batchsize = batchsize;
 	params->Validate(batchsize, N_CLASSES);
 	for (int i = 0; i < params->GetLayers().size()-1; i++) {
@@ -19,12 +19,12 @@ class NN {
 	    layers.push_back(new NNLayer(batchsize,
 					 layer.second, next_layer.second,
 					 i == 0,
-					 false, 0));
+					 false, 0, learning_rate));
 	}
 	layers.push_back(new NNLayer(batchsize,
 				     params->GetLayers()[params->GetLayers().size()-1].second, -1,
 				     false,
-				     true, 0));
+				     true, 0, learning_rate));
 	for (int i = 0; i < layers.size(); i++) {
 	    NNLayer *prev = i == 0 ? NULL : layers[i-1];
 	    NNLayer *next = i == layers.size()-1 ? NULL : layers[i+1];
@@ -52,25 +52,11 @@ class NN {
 
 	    ForwardPropagate(batch_data_placeholder);
 	    BackPropagate(batch_labels_placeholder);
-
-	    if (index >= 1000) break;
-
-	    //PrintMatrix(layers[1]->S, batchsize, 20);
-
-	    //exit(0);
-
-	    //if (index == 0) {
-		//PrintMatrix(layers[layers.size()-2]->weights, 20, 10);
-	    //}
 	}
 
 	for (int l = 0; l < layers.size(); l++) {
 	    layers[l]->IncStep();
 	}
-
-	//PrintMatrix(layers[1]->grad, 20, 10);
-	//PrintMatrix(layers[1]->weights, 20, 10);
-	//exit(0);
 
 	free(batch_data_placeholder);
 	free(batch_labels_placeholder);
@@ -111,7 +97,7 @@ class NN {
 	    std::cout << "Error allocating memory for ComputeErrorRate" << std::endl;
 	    exit(-1);
 	}
-	double n_wrong = 0;
+	double n_wrong = 0, n_seen = 0;
 	for (int index = 0; index < n_examples; index += batchsize) {
 	    int n_to_copy = std::min(batchsize, n_examples-index);
 	    MNISTImageToInput(n_to_copy, &data[index], batch_data_placeholder);
@@ -128,11 +114,12 @@ class NN {
 		int prediction = Argmax(&predictions[example*last->Dimension()], last->Dimension());
 		int truth = Argmax(&batch_labels_placeholder[example*last->Dimension()], last->Dimension());
 		if (prediction != truth) n_wrong++;
+		n_seen++;
 	    }
 	}
 	free(batch_data_placeholder);
 	free(batch_labels_placeholder);
-	return n_wrong / n_examples;
+	return n_wrong / n_seen;
     }
 
     ~NN() {
@@ -177,20 +164,21 @@ void test_nn() {
     NNParams *params = new NNParams();
     int batch_size = 128;
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
-    params->AddLayer(IMAGE_X*IMAGE_Y, 10);
-    //params->AddLayer(100, 50);
-    params->AddLayer(10, N_CLASSES);
-    NN *nn = new NN(params, batch_size);
+    params->AddLayer(IMAGE_X*IMAGE_Y, 100);
+    params->AddLayer(100, N_CLASSES);
+    NN *nn = new NN(params, batch_size, .05);
     int number_of_images, image_size;
     int number_of_labels;
     uchar **images = read_mnist_images(TRAINING_IMAGES, number_of_images, image_size);
     uchar *labels = read_mnist_labels(TRAINING_LABELS, number_of_labels);
 
-    for (int i = 0; i < 1000; i++) {
-	//double loss = nn->ComputeLoss(images, labels, number_of_images);
-	//double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
-	//std::cout << "Loss: " << loss << std::endl;
-	//std::cout << "Error rate: " << err_rate << std::endl;
+    for (int i = 0; i < 50; i++) {
+	if (i % 10 == 0) {
+	    double loss = nn->ComputeLoss(images, labels, number_of_images);
+	    double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
+	    std::cout << "Loss: " << loss << std::endl;
+	    std::cout << "Error rate: " << err_rate << std::endl;
+	}
 	nn->Train(images, labels, number_of_images);
     }
 
