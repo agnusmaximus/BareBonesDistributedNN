@@ -19,7 +19,7 @@ class NNLayer {
 
     NNLayer(int batchsize, int n_rows, int n_cols, bool is_input, bool is_output, int step) {
 	std::cout << "Initializing NNLayer of dimension " << n_rows << "x" << n_cols << std::endl;
-	weights = S = Z = F = NULL;
+	weights = S = Z = F = output = NULL;
 	next = prev = NULL;
 	this->step = step;
 	this->batchsize = batchsize;
@@ -31,6 +31,9 @@ class NNLayer {
 
 	if (is_input) {
 	    AllocateMemory(&input, n_rows*batchsize);
+	}
+	if (is_output) {
+	    AllocateMemory(&output, batchsize*n_rows);
 	}
 	AllocateMemory(&S, n_rows*batchsize);
 
@@ -52,10 +55,10 @@ class NNLayer {
 	this->prev = prev;
     }
 
-    void ForwardPropagate(uchar **images) {
+    void ForwardPropagate(double *data) {
 	if (is_input) {
 	    // Compute S = Input * W
-	    MNISTImageToInput(batchsize, images, input);
+	    memcpy(input, data, sizeof(double) * batchsize * n_rows);
 	    MatrixMultiply(input, weights, next->S,
 			   batchsize, n_cols, n_rows,
 			   n_rows, n_cols, n_cols);
@@ -65,18 +68,26 @@ class NNLayer {
 	    ReluActivation(S, Z, batchsize, n_rows, n_rows, n_rows+1);
 
 	    if (is_output) {
+		for (int b = 0; b < batchsize; b++) {
+		    Softmax(&Z[b*n_rows+1], &output[b*n_rows], n_rows);
+		}
 		return;
 	    }
+
+	    // Compute F_i = f'_i(S_i)^T
+	    ReluActivationGradient(S, F, batchsize, n_rows, n_rows, n_rows);
 
 	    // Compute S_j = Z_i W_i
 	    MatrixMultiply(Z, weights, next->S,
 			   batchsize, n_cols, n_rows+1,
 			   n_rows+1, n_cols, n_cols);
 
-	    // Compute F_i = f'_i(S_i)^T
-	    ReluActivationGradient(S, F, batchsize, n_rows, n_rows, n_rows);
 	}
-	next->ForwardPropagate(images);
+	next->ForwardPropagate(data);
+    }
+
+    int Dimension() {
+	return n_rows;
     }
 
     ~NNLayer() {
@@ -85,6 +96,7 @@ class NNLayer {
 	if (Z != NULL) free(Z);
 	if (F != NULL) free(F);
 	if (input != NULL) free(input);
+	if (output != NULL) free(output);
     }
 
  private:
@@ -93,7 +105,7 @@ class NNLayer {
     // for the bias.
     int n_rows, n_cols, batchsize, step;
     bool is_input, is_output;
-    double *weights, *S, *Z, *F, *input;
+    double *weights, *S, *Z, *F, *input, *output;
     NNLayer *next, *prev;
 
     void InitializeGaussian(double *ptr, int n_elements) {

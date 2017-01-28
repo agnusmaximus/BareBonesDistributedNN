@@ -98,6 +98,7 @@ void test_load_labels(string path, int n_expected) {
 }
 
 void MNISTImageToInput(int batchsize, uchar **images, double *output) {
+
     for (int i = 0; i < batchsize; i++) {
 	for (int j = 0; j < IMAGE_X*IMAGE_Y; j++) {
 	    output[i * IMAGE_X*IMAGE_Y + j] = images[i][j];
@@ -105,6 +106,13 @@ void MNISTImageToInput(int batchsize, uchar **images, double *output) {
     }
 }
 
+void MNISTOneHotLabelsToInput(int batchsize, uchar *labels, double *output) {
+    for (int i = 0; i < batchsize; i++) {
+	double *output_row = &output[i*N_CLASSES];
+	memset(output_row, 0, sizeof(double) * N_CLASSES);
+	output_row[labels[i]] = 1;
+    }
+}
 
 void test_load_data() {
     std::cout << "Test loading mnist data..." << std::endl;

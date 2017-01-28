@@ -48,3 +48,16 @@ void ReluActivationGradient(double *in, double *out,
 	}
     }
 }
+
+void Softmax(double *in, double *out, int length) {
+    double s = 0, maximum = -1000000000;
+    for (int i = 0; i < length; i++) {
+	maximum = std::max(maximum, in[i]);
+    }
+    for (int i = 0; i < length; i++) {
+	s += exp(in[i]-maximum);
+    }
+    for (int i = 0; i < length; i++) {
+	out[i] = in[i] / s;
+    }
+}

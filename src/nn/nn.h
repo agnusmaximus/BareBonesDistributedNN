@@ -10,6 +10,7 @@
 class NN {
  public:
     NN(NNParams *params, int batchsize) {
+	this->batchsize = batchsize;
 	params->Validate(batchsize, N_CLASSES);
 	for (int i = 0; i < params->GetLayers().size()-1; i++) {
 	    std::pair<int, int> layer = params->GetLayers()[i];
@@ -30,8 +31,35 @@ class NN {
 	}
     }
 
-    void ForwardPropagate(uchar **images) {
-	layers[0]->ForwardPropagate(images);
+    void ForwardPropagate(double *data) {
+	layers[0]->ForwardPropagate(data);
+    }
+
+    double ComputeLoss(uchar **data, uchar *labels, int n_examples) {
+	int n_features = layers[0]->Dimension();
+	int n_outputs = layers[layers.size()-1]->Dimension();
+	double *batch_data_placeholder = (double *)malloc(sizeof(double) * batchsize * n_features);
+	double *batch_labels_placeholder = (double *)malloc(sizeof(double) * batchsize * n_outputs);
+	if (!batch_data_placeholder || !batch_labels_placeholder) {
+	    std::cout << "Error allocating memory for ComputeLoss" << std::endl;
+	    exit(-1);
+	}
+	for (int index = 0; index < n_examples; index += batchsize) {
+	    int n_to_copy = std::min(batchsize, n_examples-index);
+	    MNISTImageToInput(n_to_copy, &data[index], batch_data_placeholder);
+	    MNISTOneHotLabelsToInput(n_to_copy, &labels[index], batch_labels_placeholder);
+	    if (n_to_copy < batchsize) {
+		memset(&batch_data_placeholder[batchsize-n_to_copy], 0, sizeof(double) * n_features * (batchsize-n_to_copy));
+		memset(&batch_labels_placeholder[batchsize-n_to_copy], 0, sizeof(double) * (batchsize-n_to_copy));
+	    }
+	    ComputeBatchLoss(batch_data_placeholder,
+			     batch_labels_placeholder);
+	}
+	return 0;
+    }
+
+    double ComputeErrorRate(uchar **data, uchar *labels) {
+	return 0;
     }
 
     ~NN() {
@@ -42,6 +70,12 @@ class NN {
 
  private:
     std::vector<NNLayer *> layers;
+    int batchsize;
+
+    double ComputeBatchLoss(double *data, double *labels) {
+	ForwardPropagate(data);
+	return 0;
+    }
 };
 
 void test_nn() {
@@ -55,8 +89,10 @@ void test_nn() {
     params->AddLayer(400, N_CLASSES);
     NN *nn = new NN(params, batch_size);
     int number_of_images, image_size;
+    int number_of_labels;
     uchar **images = read_mnist_images(TRAINING_IMAGES, number_of_images, image_size);
-    nn->ForwardPropagate(images);
+    uchar *labels = read_mnist_labels(TRAINING_LABELS, number_of_labels);
+    nn->ComputeLoss(images, labels, number_of_images);
 
     delete nn;
     delete params;

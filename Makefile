@@ -1,4 +1,4 @@
-FLAGS=-std=c++11
+FLAGS=-std=c++11 -Ofast
 LIBS=-I/usr/local/opt/openblas/include/ -lblas
 
 single_machine:
