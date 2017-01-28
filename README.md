@@ -1,1 +1,1 @@
-# BareBonesDistrubedNN
+# BareBonesDistributedNN
