@@ -119,6 +119,27 @@ void MNISTOneHotLabelsToInput(int batchsize, uchar *labels, double *output) {
     }
 }
 
+void MNISTSwapImages(uchar **images, int i, int j) {
+    uchar tmp[IMAGE_X*IMAGE_Y];
+    memcpy(tmp, images[i], sizeof(uchar) * IMAGE_X*IMAGE_Y);
+    memcpy(images[i], images[j], sizeof(uchar) * IMAGE_X*IMAGE_Y);
+    memcpy(images[j], tmp, sizeof(uchar) * IMAGE_X*IMAGE_Y);
+}
+
+void MNISTSwapLabels(uchar *labels, int i, int j) {
+    uchar tmp = labels[i];
+    labels[i] = labels[j];
+    labels[j] = tmp;
+}
+
+void MNISTShuffleDataAndLabels(uchar **images, uchar *labels, int n_examples) {
+    for (int i = n_examples-1; i >= 0; i--) {
+	int to_swap_to = rand() % (i+1);
+	MNISTSwapImages(images, i, to_swap_to);
+	MNISTSwapLabels(labels, i, to_swap_to);
+    }
+}
+
 void PrintPicture(double *data) {
     int k = 0;
     for (int i = 0; i < IMAGE_Y; i++) {

@@ -33,6 +33,7 @@ class NN {
     }
 
     void Train(uchar **data, uchar *labels, int n_examples) {
+	MNISTShuffleDataAndLabels(data, labels, n_examples);
 	int n_features = layers[0]->Dimension();
 	int n_outputs = layers[layers.size()-1]->Dimension();
 	double *batch_data_placeholder = (double *)malloc(sizeof(double) * batchsize * n_features);
@@ -165,22 +166,35 @@ void test_nn() {
     int batch_size = 128;
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
     params->AddLayer(IMAGE_X*IMAGE_Y, 100);
+    params->AddLayer(100, 100);
     params->AddLayer(100, N_CLASSES);
     NN *nn = new NN(params, batch_size, .05);
-    int number_of_images, image_size;
-    int number_of_labels;
+    int number_of_images, number_of_test_images, image_size;
+    int number_of_labels, number_of_test_labels;
     uchar **images = read_mnist_images(TRAINING_IMAGES, number_of_images, image_size);
     uchar *labels = read_mnist_labels(TRAINING_LABELS, number_of_labels);
+    uchar **test_images = read_mnist_images(TEST_IMAGES, number_of_test_images, image_size);
+    uchar *test_labels = read_mnist_labels(TEST_LABELS, number_of_test_labels);
 
     for (int i = 0; i < 50; i++) {
 	if (i % 10 == 0) {
 	    double loss = nn->ComputeLoss(images, labels, number_of_images);
 	    double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
+	    double test_err_rate = nn->ComputeErrorRate(test_images, test_labels, number_of_test_images);
 	    std::cout << "Loss: " << loss << std::endl;
-	    std::cout << "Error rate: " << err_rate << std::endl;
+	    std::cout << "Train Error rate: " << err_rate << std::endl;
+	    std::cout << "Test Error rate: " << test_err_rate << std::endl;
 	}
 	nn->Train(images, labels, number_of_images);
     }
+
+    // Final results
+    double loss = nn->ComputeLoss(images, labels, number_of_images);
+    double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
+    double test_err_rate = nn->ComputeErrorRate(test_images, test_labels, number_of_test_images);
+    std::cout << "Loss: " << loss << std::endl;
+    std::cout << "Train Error rate: " << err_rate << std::endl;
+    std::cout << "Test Error rate: " << test_err_rate << std::endl;
 
     delete nn;
     delete params;
