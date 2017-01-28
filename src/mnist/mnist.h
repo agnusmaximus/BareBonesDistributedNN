@@ -123,7 +123,7 @@ void PrintPicture(double *data) {
     int k = 0;
     for (int i = 0; i < IMAGE_Y; i++) {
 	for (int j = 0; j < IMAGE_X; j++) {
-	    if (data[k++] > 128) {
+	    if (data[k++] > 0) {
 		std::cout << "x";
 	    }
 	    else {

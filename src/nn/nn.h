@@ -49,15 +49,28 @@ class NN {
 		memset(&batch_data_placeholder[batchsize-n_to_copy], 0, sizeof(double) * n_features * (batchsize-n_to_copy));
 		memset(&batch_labels_placeholder[batchsize-n_to_copy], 0, sizeof(double) * (batchsize-n_to_copy));
 	    }
+
 	    ForwardPropagate(batch_data_placeholder);
 	    BackPropagate(batch_labels_placeholder);
 
-	    if (index == 0) {
-		//PrintMatrix(layers[layers.size()-2]->weights, 200, 10);
-		//exit(0);
-	    }
-	    break;
+	    if (index >= 1000) break;
+
+	    //PrintMatrix(layers[1]->S, batchsize, 20);
+
+	    //exit(0);
+
+	    //if (index == 0) {
+		//PrintMatrix(layers[layers.size()-2]->weights, 20, 10);
+	    //}
 	}
+
+	for (int l = 0; l < layers.size(); l++) {
+	    layers[l]->IncStep();
+	}
+
+	//PrintMatrix(layers[1]->grad, 20, 10);
+	//PrintMatrix(layers[1]->weights, 20, 10);
+	//exit(0);
 
 	free(batch_data_placeholder);
 	free(batch_labels_placeholder);
@@ -164,19 +177,20 @@ void test_nn() {
     NNParams *params = new NNParams();
     int batch_size = 128;
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
-    params->AddLayer(IMAGE_X*IMAGE_Y, 50);
-    params->AddLayer(50, N_CLASSES);
+    params->AddLayer(IMAGE_X*IMAGE_Y, 10);
+    //params->AddLayer(100, 50);
+    params->AddLayer(10, N_CLASSES);
     NN *nn = new NN(params, batch_size);
     int number_of_images, image_size;
     int number_of_labels;
     uchar **images = read_mnist_images(TRAINING_IMAGES, number_of_images, image_size);
     uchar *labels = read_mnist_labels(TRAINING_LABELS, number_of_labels);
 
-    for (int i = 0; i < 10; i++) {
-	double loss = nn->ComputeLoss(images, labels, number_of_images);
-	double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
-	std::cout << "Loss: " << loss << std::endl;
-	std::cout << "Error rate: " << err_rate << std::endl;
+    for (int i = 0; i < 1000; i++) {
+	//double loss = nn->ComputeLoss(images, labels, number_of_images);
+	//double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
+	//std::cout << "Loss: " << loss << std::endl;
+	//std::cout << "Error rate: " << err_rate << std::endl;
 	nn->Train(images, labels, number_of_images);
     }
 

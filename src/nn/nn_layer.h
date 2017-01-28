@@ -28,6 +28,7 @@ class NNLayer {
 	this->is_input = is_input;
 	this->is_output = is_output;
 	distribution = std::normal_distribution<double>(0, 1);
+	lr = 1e-4;
 
 	if (is_input) {
 	    AllocateMemory(&input, (n_rows+1)*batchsize);
@@ -67,6 +68,11 @@ class NNLayer {
 
     void ForwardPropagate(double *data) {
 
+	// Be sure to memset next->S as gemm += rather than =.
+	if (next) {
+	    memset(next->S, 0, sizeof(double) * batchsize * n_cols);
+	}
+
 	if (is_input) {
 	    // Compute S = Input * W
 	    for (int i = 0; i < batchsize; i++) {
@@ -83,17 +89,19 @@ class NNLayer {
 	    ReluActivation(S, Z, batchsize, n_rows, n_rows, n_rows+1);
 
 	    if (is_output) {
+
+		//std::cout << "OUTPUT" << std::endl;
+		//PrintMatrix(Z, batchsize, Dimension()+1);
+
 		for (int b = 0; b < batchsize; b++) {
 		    Softmax(&Z[b*(n_rows+1)], &output[b*n_rows], n_rows);
 		}
 		return;
 	    }
 
+
 	    // Compute F_i = f'_i(S_i)^T
 	    ReluActivationGradient(S, F, batchsize, n_rows, n_rows, n_rows);
-
-	    // Be sure to memset next->S as gemm += rather than =.
-	    memset(next->S, 0, sizeof(double) * batchsize * n_cols);
 
 	    // Compute S_j = Z_i W_i
 	    MatrixMultiply(Z, weights, next->S,
@@ -105,10 +113,9 @@ class NNLayer {
     }
 
     void ApplyGrad(double learning_rate) {
-	int n_functional_rows = is_input ? n_rows+1 : n_rows;
 	MatrixAdd(weights, grad, weights,
 		  1, -learning_rate,
-		  n_functional_rows, n_cols,
+		  n_rows+1, n_cols,
 		  n_cols, n_cols, n_cols);
     }
 
@@ -117,12 +124,14 @@ class NNLayer {
 	memset(D, 0, sizeof(double) * n_rows * batchsize);
 
 	if (is_output) {
+
 	    // Here we actually have D'
 	    MatrixAdd(Z, labels, D, 1, -1,
 		      batchsize, Dimension(),
 		      n_rows+1, Dimension(), Dimension());
 	}
 	else {
+
 
 	    // Compute D' * W'
 	    MatrixMultiplyTransB(next->D, weights, D,
@@ -134,11 +143,13 @@ class NNLayer {
 			      batchsize, n_rows,
 			      n_rows, n_rows, n_rows);
 
-	    memset(grad, 0, sizeof(double) * n_rows * n_cols);
+	    //PrintMatrix(D, batchsize, n_rows);
+
+	    memset(grad, 0, sizeof(double) * (n_rows+1) * n_cols);
 	    if (is_input) {
 		MatrixMultiplyTransA(input, next->D, grad,
-				     n_rows, n_cols, batchsize,
-				     n_rows, n_cols, n_cols);
+				     n_rows+1, n_cols, batchsize,
+				     n_rows+1, n_cols, n_cols);
 	    }
 	    else {
 		MatrixMultiplyTransA(Z, next->D, grad,
@@ -149,11 +160,24 @@ class NNLayer {
 	    //std::cout << n_rows << " " << n_cols << " vs " << next->n_rows << " " << next->batchsize << std::endl;
 	    //std::cout << n_rows << " " << batchsize << std::endl;
 
-	    ApplyGrad(1e-5);
+	    //PrintMatrix(weights, n_rows+1, n_cols);
+	    ApplyGrad(lr);
+
+	    //PrintMatrix(Z, batchsize, n_rows+1);
+	    //PrintMatrix(next->D, batchsize, n_cols);
+	    //PrintMatrix(grad, n_rows+1, n_cols);
+	    //PrintMatrix(weights, n_rows+1, n_cols);
+
+	    //exit(0);
 	}
 
 	if (prev)
 	    prev->BackPropagate(labels);
+    }
+
+    void IncStep() {
+	step++;
+	//lr *= .90;
     }
 
     int Dimension() {
@@ -184,6 +208,7 @@ class NNLayer {
     int n_rows, n_cols, batchsize, step;
     bool is_input, is_output;
     NNLayer *next, *prev;
+    double lr;
 
     void InitializeGaussian(double *ptr, int n_elements) {
 	for (int i = 0; i < n_elements; i++) {

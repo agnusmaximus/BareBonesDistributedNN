@@ -140,6 +140,7 @@ void PrintMatrix(double *data, int h, int w) {
 	}
 	std::cout << std::endl;
     }
+    printf("------------------------------------\n");
 }
 
 // Compute Hadamard product C = A . B
