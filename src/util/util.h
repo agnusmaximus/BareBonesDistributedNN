@@ -4,6 +4,8 @@
 #include <vector>
 #include <algorithm>
 
+#define BUMP 1e-10
+
 void AllocateMemory(double **ptr, int sz) {
     *ptr = (double *)malloc(sizeof(double) * sz);
     if (!*ptr) {
@@ -60,4 +62,12 @@ void Softmax(double *in, double *out, int length) {
     for (int i = 0; i < length; i++) {
 	out[i] = in[i] / s;
     }
+}
+
+double LogDot(double *a, double *b, int length) {
+    double r = 0;
+    for (int i = 0; i < length; i++) {
+	r += -log(a[i]+BUMP) * b[i];
+    }
+    return r;
 }

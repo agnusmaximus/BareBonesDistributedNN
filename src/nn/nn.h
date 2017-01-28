@@ -44,6 +44,7 @@ class NN {
 	    std::cout << "Error allocating memory for ComputeLoss" << std::endl;
 	    exit(-1);
 	}
+	double loss = 0;
 	for (int index = 0; index < n_examples; index += batchsize) {
 	    int n_to_copy = std::min(batchsize, n_examples-index);
 	    MNISTImageToInput(n_to_copy, &data[index], batch_data_placeholder);
@@ -52,10 +53,10 @@ class NN {
 		memset(&batch_data_placeholder[batchsize-n_to_copy], 0, sizeof(double) * n_features * (batchsize-n_to_copy));
 		memset(&batch_labels_placeholder[batchsize-n_to_copy], 0, sizeof(double) * (batchsize-n_to_copy));
 	    }
-	    ComputeBatchLoss(batch_data_placeholder,
-			     batch_labels_placeholder);
+	    loss += ComputeBatchLoss(batch_data_placeholder,
+				     batch_labels_placeholder);
 	}
-	return 0;
+	return loss;
     }
 
     double ComputeErrorRate(uchar **data, uchar *labels) {
@@ -74,7 +75,15 @@ class NN {
 
     double ComputeBatchLoss(double *data, double *labels) {
 	ForwardPropagate(data);
-	return 0;
+	NNLayer *last = layers[layers.size()-1];
+	double *predictions = last->Output();
+	double loss = 0;
+	for (int i = 0; i < batchsize; i++) {
+	    loss += LogDot(&predictions[i*last->Dimension()],
+			   &labels[i*last->Dimension()],
+			   last->Dimension());
+	}
+	return loss;
     }
 };
 
@@ -92,7 +101,9 @@ void test_nn() {
     int number_of_labels;
     uchar **images = read_mnist_images(TRAINING_IMAGES, number_of_images, image_size);
     uchar *labels = read_mnist_labels(TRAINING_LABELS, number_of_labels);
-    nn->ComputeLoss(images, labels, number_of_images);
+    double loss = nn->ComputeLoss(images, labels, number_of_images);
+
+    std::cout << "Loss: " << loss << std::endl;
 
     delete nn;
     delete params;

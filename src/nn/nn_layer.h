@@ -90,6 +90,11 @@ class NNLayer {
 	return n_rows;
     }
 
+    double *Output() {
+	assert(is_output);
+	return output;
+    }
+
     ~NNLayer() {
 	if (weights != NULL) free(weights);
 	if (S != NULL) free(S);
