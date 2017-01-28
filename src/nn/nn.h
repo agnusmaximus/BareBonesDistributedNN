@@ -83,7 +83,8 @@ class NN {
 		memset(&batch_labels_placeholder[batchsize-n_to_copy], 0, sizeof(double) * (batchsize-n_to_copy));
 	    }
 	    loss += ComputeBatchLoss(batch_data_placeholder,
-				     batch_labels_placeholder);
+				     batch_labels_placeholder,
+				     n_to_copy);
 	}
 	free(batch_data_placeholder);
 	free(batch_labels_placeholder);
@@ -112,7 +113,7 @@ class NN {
 	    ForwardPropagate(batch_data_placeholder);
 	    NNLayer *last = layers[layers.size()-1];
 	    double *predictions = last->Output();
-	    for (int example = 0; example < batchsize; example++) {
+	    for (int example = 0; example < n_to_copy; example++) {
 		int prediction = Argmax(&predictions[example*last->Dimension()], last->Dimension());
 		int truth = Argmax(&batch_labels_placeholder[example*last->Dimension()], last->Dimension());
 		if (prediction != truth) n_wrong++;
@@ -134,12 +135,13 @@ class NN {
     std::vector<NNLayer *> layers;
     int batchsize;
 
-    double ComputeBatchLoss(double *data, double *labels) {
+    double ComputeBatchLoss(double *data, double *labels, int n_examples) {
+	assert(n_examples <= batchsize);
 	ForwardPropagate(data);
 	NNLayer *last = layers[layers.size()-1];
 	double *predictions = last->Output();
 	double loss = 0;
-	for (int i = 0; i < batchsize; i++) {
+	for (int i = 0; i < n_examples; i++) {
 	    loss += LogDot(&predictions[i*last->Dimension()],
 			   &labels[i*last->Dimension()],
 			   last->Dimension());
@@ -169,7 +171,7 @@ void test_nn() {
     params->AddLayer(IMAGE_X*IMAGE_Y, 100);
     params->AddLayer(100, 100);
     params->AddLayer(100, N_CLASSES);
-    NN *nn = new NN(params, batch_size, .05);
+    NN *nn = new NN(params, batch_size, .01);
     int number_of_images, number_of_test_images, image_size;
     int number_of_labels, number_of_test_labels;
     uchar **images = read_mnist_images(TRAINING_IMAGES, number_of_images, image_size);
