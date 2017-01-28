@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #define BUMP 1e-10
+#define INF std::numeric_limits<double>::infinity()
 
 void AllocateMemory(double **ptr, int sz) {
     *ptr = (double *)malloc(sizeof(double) * sz);
@@ -12,6 +13,7 @@ void AllocateMemory(double **ptr, int sz) {
 	std::cout << "Error allocating memory." << std::endl;
 	exit(-1);
     }
+    memset(*ptr, 0, sizeof(double) * sz);
 }
 
 // C = A*B
@@ -52,7 +54,7 @@ void ReluActivationGradient(double *in, double *out,
 }
 
 void Softmax(double *in, double *out, int length) {
-    double s = 0, maximum = -1000000000;
+    double s = 0, maximum = -INF;
     for (int i = 0; i < length; i++) {
 	maximum = std::max(maximum, in[i]);
     }
@@ -60,7 +62,7 @@ void Softmax(double *in, double *out, int length) {
 	s += exp(in[i]-maximum);
     }
     for (int i = 0; i < length; i++) {
-	out[i] = in[i] / s;
+	out[i] = exp(in[i]-maximum) / s;
     }
 }
 
@@ -70,4 +72,25 @@ double LogDot(double *a, double *b, int length) {
 	r += -log(a[i]+BUMP) * b[i];
     }
     return r;
+}
+
+double Argmax(double *a, int length) {
+    int index = -INF;
+    double maxi =-INF;
+    for (int i = 0; i < length; i++) {
+	if (a[i] > maxi) {
+	    index = i;
+	    maxi = a[i];
+	}
+    }
+    return index;
+}
+
+void PrintMatrix(double *data, int h, int w) {
+    for (int i = 0; i < h; i++) {
+	for (int j = 0; j < w; j++) {
+	    std::cout << data[i*w + j] << " ";
+	}
+	std::cout << std::endl;
+    }
 }

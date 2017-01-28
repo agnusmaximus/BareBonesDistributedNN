@@ -59,8 +59,35 @@ class NN {
 	return loss;
     }
 
-    double ComputeErrorRate(uchar **data, uchar *labels) {
-	return 0;
+    double ComputeErrorRate(uchar **data, uchar *labels, int n_examples) {
+	int n_features = layers[0]->Dimension();
+	int n_outputs = layers[layers.size()-1]->Dimension();
+	double *batch_data_placeholder = (double *)malloc(sizeof(double) * batchsize * n_features);
+	double *batch_labels_placeholder = (double *)malloc(sizeof(double) * batchsize * n_outputs);
+	if (!batch_data_placeholder || !batch_labels_placeholder) {
+	    std::cout << "Error allocating memory for ComputeLoss" << std::endl;
+	    exit(-1);
+	}
+	double n_wrong = 0;
+	for (int index = 0; index < n_examples; index += batchsize) {
+	    int n_to_copy = std::min(batchsize, n_examples-index);
+	    MNISTImageToInput(n_to_copy, &data[index], batch_data_placeholder);
+	    MNISTOneHotLabelsToInput(n_to_copy, &labels[index], batch_labels_placeholder);
+	    if (n_to_copy < batchsize) {
+		memset(&batch_data_placeholder[batchsize-n_to_copy], 0, sizeof(double) * n_features * (batchsize-n_to_copy));
+		memset(&batch_labels_placeholder[batchsize-n_to_copy], 0, sizeof(double) * (batchsize-n_to_copy));
+	    }
+
+	    ForwardPropagate(batch_data_placeholder);
+	    NNLayer *last = layers[layers.size()-1];
+	    double *predictions = last->Output();
+	    for (int example = 0; example < batchsize; example++) {
+		int prediction = Argmax(&predictions[example*last->Dimension()], last->Dimension());
+		int truth = Argmax(&batch_labels_placeholder[example*last->Dimension()], last->Dimension());
+		if (prediction != truth) n_wrong++;
+	    }
+	}
+	return n_wrong / n_examples;
     }
 
     ~NN() {
@@ -102,8 +129,10 @@ void test_nn() {
     uchar **images = read_mnist_images(TRAINING_IMAGES, number_of_images, image_size);
     uchar *labels = read_mnist_labels(TRAINING_LABELS, number_of_labels);
     double loss = nn->ComputeLoss(images, labels, number_of_images);
+    double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
 
     std::cout << "Loss: " << loss << std::endl;
+    std::cout << "Error rate: " << err_rate << std::endl;
 
     delete nn;
     delete params;

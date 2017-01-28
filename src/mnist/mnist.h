@@ -114,6 +114,21 @@ void MNISTOneHotLabelsToInput(int batchsize, uchar *labels, double *output) {
     }
 }
 
+void PrintPicture(double *data) {
+    int k = 0;
+    for (int i = 0; i < IMAGE_Y; i++) {
+	for (int j = 0; j < IMAGE_X; j++) {
+	    if (data[k++] > 128) {
+		std::cout << "x";
+	    }
+	    else {
+		std::cout << ".";
+	    }
+	}
+	std::cout << std::endl;
+    }
+}
+
 void test_load_data() {
     std::cout << "Test loading mnist data..." << std::endl;
     test_load_images(TRAINING_IMAGES, 60000);

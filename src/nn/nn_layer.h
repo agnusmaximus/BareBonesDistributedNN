@@ -27,7 +27,7 @@ class NNLayer {
 	this->n_cols = n_cols;
 	this->is_input = is_input;
 	this->is_output = is_output;
-	distribution = std::normal_distribution<double>(-1, 1);
+	distribution = std::normal_distribution<double>(0, 1);
 
 	if (is_input) {
 	    AllocateMemory(&input, n_rows*batchsize);
@@ -39,6 +39,10 @@ class NNLayer {
 
 	// We add +1 for the bias column.
 	AllocateMemory(&Z, (n_rows+1)*batchsize);
+	for (int b = 0; b < batchsize; b++) {
+	    Z[b * (n_rows+1) + n_rows] = 1;
+	}
+
 	AllocateMemory(&F, n_rows*batchsize);
 
 	if (!is_output) {
@@ -69,7 +73,7 @@ class NNLayer {
 
 	    if (is_output) {
 		for (int b = 0; b < batchsize; b++) {
-		    Softmax(&Z[b*n_rows+1], &output[b*n_rows], n_rows);
+		    Softmax(&Z[b*(n_rows+1)], &output[b*n_rows], n_rows);
 		}
 		return;
 	    }
@@ -116,9 +120,6 @@ class NNLayer {
     void InitializeGaussian(double *ptr, int n_elements) {
 	for (int i = 0; i < n_elements; i++) {
 	    ptr[i] = distribution(generator);
-	}
-	for (int i = 0; i < n_rows; i++) {
-	    ptr[i * n_cols + n_cols - 1] = 1;
 	}
     }
 };
