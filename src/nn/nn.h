@@ -32,8 +32,28 @@ class NN {
 	}
     }
 
-    void ForwardPropagate(double *data) {
-	layers[0]->ForwardPropagate(data);
+    void Train(uchar **data, uchar *labels, int n_examples) {
+	int n_features = layers[0]->Dimension();
+	int n_outputs = layers[layers.size()-1]->Dimension();
+	double *batch_data_placeholder = (double *)malloc(sizeof(double) * batchsize * n_features);
+	double *batch_labels_placeholder = (double *)malloc(sizeof(double) * batchsize * n_outputs);
+	if (!batch_data_placeholder || !batch_labels_placeholder) {
+	    std::cout << "Error allocating memory for Train" << std::endl;
+	    exit(-1);
+	}
+	for (int index = 0; index < n_examples; index += batchsize) {
+	    int n_to_copy = std::min(batchsize, n_examples-index);
+	    MNISTImageToInput(n_to_copy, &data[index], batch_data_placeholder);
+	    MNISTOneHotLabelsToInput(n_to_copy, &labels[index], batch_labels_placeholder);
+	    if (n_to_copy < batchsize) {
+		memset(&batch_data_placeholder[batchsize-n_to_copy], 0, sizeof(double) * n_features * (batchsize-n_to_copy));
+		memset(&batch_labels_placeholder[batchsize-n_to_copy], 0, sizeof(double) * (batchsize-n_to_copy));
+	    }
+	    ForwardPropagate(batch_data_placeholder);
+	    BackPropagate(batch_labels_placeholder);
+	}
+	free(batch_data_placeholder);
+	free(batch_labels_placeholder);
     }
 
     double ComputeLoss(uchar **data, uchar *labels, int n_examples) {
@@ -68,7 +88,7 @@ class NN {
 	double *batch_data_placeholder = (double *)malloc(sizeof(double) * batchsize * n_features);
 	double *batch_labels_placeholder = (double *)malloc(sizeof(double) * batchsize * n_outputs);
 	if (!batch_data_placeholder || !batch_labels_placeholder) {
-	    std::cout << "Error allocating memory for ComputeLoss" << std::endl;
+	    std::cout << "Error allocating memory for ComputeErrorRate" << std::endl;
 	    exit(-1);
 	}
 	double n_wrong = 0;
@@ -117,6 +137,14 @@ class NN {
 	}
 	return loss;
     }
+
+    void ForwardPropagate(double *data) {
+	layers[0]->ForwardPropagate(data);
+    }
+
+    void BackPropagate(double *labels) {
+	layers[layers.size()-1]->BackPropagate(labels);
+    }
 };
 
 void test_nn() {
@@ -129,9 +157,10 @@ void test_nn() {
     NNParams *params = new NNParams();
     int batch_size = 128;
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
-    params->AddLayer(IMAGE_X*IMAGE_Y, 400);
-    params->AddLayer(400, 500);
-    params->AddLayer(500, N_CLASSES);
+    params->AddLayer(IMAGE_X*IMAGE_Y, 300);
+    params->AddLayer(300, 100);
+    params->AddLayer(100, 200);
+    params->AddLayer(200, N_CLASSES);
     NN *nn = new NN(params, batch_size);
     int number_of_images, image_size;
     int number_of_labels;
@@ -141,9 +170,9 @@ void test_nn() {
     for (int i = 0; i < 10; i++) {
 	double loss = nn->ComputeLoss(images, labels, number_of_images);
 	double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
-
 	std::cout << "Loss: " << loss << std::endl;
 	std::cout << "Error rate: " << err_rate << std::endl;
+	nn->Train(images, labels, number_of_images);
     }
 
     delete nn;

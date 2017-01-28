@@ -19,7 +19,7 @@ class NNLayer {
 
     NNLayer(int batchsize, int n_rows, int n_cols, bool is_input, bool is_output, int step) {
 	std::cout << "Initializing NNLayer of dimension " << n_rows << "x" << n_cols << std::endl;
-	weights = S = Z = F = output = NULL;
+	weights = S = Z = F = output = input = D = grad = NULL;
 	next = prev = NULL;
 	this->step = step;
 	this->batchsize = batchsize;
@@ -51,7 +51,9 @@ class NNLayer {
 	    int n_rows_to_allocate = is_input ? n_rows : n_rows+1;
 	    AllocateMemory(&weights, n_rows_to_allocate * n_cols);
 	    InitializeGaussian(weights, n_rows_to_allocate * n_cols);
+	    AllocateMemory(&grad, n_rows_to_allocate * n_cols);
 	}
+	AllocateMemory(&D, n_rows * batchsize);
     }
 
     void WireLayers(NNLayer *prev, NNLayer *next) {
@@ -97,11 +99,21 @@ class NNLayer {
     }
 
     void BackPropagate(double *labels) {
-	if (is_output) {
 
+	memset(D, 0, sizeof(double) * n_rows * batchsize);
+
+	if (is_output) {
+	    MatrixAdd(output, labels, D, 1, -1,
+		      batchsize, Dimension(),
+		      Dimension(), Dimension(), Dimension());
 	}
 	else {
+	    int n_weight_rows = is_input ? n_rows : n_rows+1;
+	    //MatrixMultiply(weights, next->D, D,
+	    //n_weight_rows, batchsize, n_cols,
 
+	    std::cout << n_weight_rows << " " << n_cols << " vs " << next->n_rows << " " << next->batchsize << std::endl;
+	    std::cout << n_rows << " " << batchsize << std::endl;
 	}
 
 	if (prev)
@@ -132,7 +144,7 @@ class NNLayer {
     // for the bias.
     int n_rows, n_cols, batchsize, step;
     bool is_input, is_output;
-    double *weights, *S, *Z, *F, *input, *output;
+    double *weights, *S, *Z, *F, *input, *output, *D, *grad;
     NNLayer *next, *prev;
 
     void InitializeGaussian(double *ptr, int n_elements) {

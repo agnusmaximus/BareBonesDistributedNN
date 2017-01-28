@@ -16,6 +16,16 @@ void AllocateMemory(double **ptr, int sz) {
     memset(*ptr, 0, sizeof(double) * sz);
 }
 
+// C = A*alpha + b*beta
+void MatrixAdd(double *A, double *B, double *C, double alpha, double beta,
+	       int n_rows, int n_cols, int lda, int ldb, int ldc) {
+    for (int row = 0; row < n_rows; row++) {
+	for (int col = 0; col < n_cols; col++) {
+	    C[row*ldc+col] = A[row*lda+col] * alpha + B[row*ldb+col] * beta;
+	}
+    }
+}
+
 // C = A*B
 // A = mxk, B = kxn, c = mxn
 // mm - leading dimension of A
