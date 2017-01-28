@@ -43,6 +43,43 @@ void MatrixMultiply(double *A, double *B, double *C,
 		C, kk);
 }
 
+
+// C = A*B^T
+// A = mxk, B^T = kxn, c = mxn
+// mm - leading dimension of A
+// nn - leading dimension of B^T
+// cc - leading dimension of C
+void MatrixMultiplyTransB(double *A, double *B, double *C,
+		    int m, int n, int k,
+		    int mm, int nn, int kk) {
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
+		m, n, k,
+		1,
+		A, mm,
+		B, nn,
+		1,
+		C, kk);
+}
+
+
+// C = A^T*B
+// A = mxk, B^T = kxn, c = mxn
+// mm - leading dimension of A
+// nn - leading dimension of B^T
+// cc - leading dimension of C
+void MatrixMultiplyTransA(double *A, double *B, double *C,
+		    int m, int n, int k,
+		    int mm, int nn, int kk) {
+    cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
+		m, n, k,
+		1,
+		A, mm,
+		B, nn,
+		1,
+		C, kk);
+}
+
+
 void ReluActivation(double *in, double *out,
 		    int n_rows, int n_cols,
 		    int ld_in, int ld_out) {
@@ -102,5 +139,16 @@ void PrintMatrix(double *data, int h, int w) {
 	    std::cout << data[i*w + j] << " ";
 	}
 	std::cout << std::endl;
+    }
+}
+
+// Compute Hadamard product C = A . B
+void MultiplyEntrywise(double *A, double *B, double *C,
+		       int n_rows, int n_cols,
+		       int lda, int ldb, int ldc) {
+    for (int i = 0; i < n_rows; i++) {
+	for (int j = 0; j < n_cols; j++) {
+	    C[i*ldc+j] = A[i*lda+j] * B[i*ldb+j];
+	}
     }
 }

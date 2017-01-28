@@ -30,12 +30,15 @@ class NNLayer {
 	distribution = std::normal_distribution<double>(0, 1);
 
 	if (is_input) {
-	    AllocateMemory(&input, n_rows*batchsize);
+	    AllocateMemory(&input, (n_rows+1)*batchsize);
+	    for (int b = 0; b < batchsize; b++) {
+		input[b * (n_rows+1) + n_rows] = 1;
+	    }
 	}
 	if (is_output) {
 	    AllocateMemory(&output, batchsize*n_rows);
 	}
-	AllocateMemory(&S, n_rows*batchsize);
+	AllocateMemory(&S, batchsize*n_rows);
 
 	// We add +1 for the bias column.
 	AllocateMemory(&Z, (n_rows+1)*batchsize);
@@ -48,11 +51,12 @@ class NNLayer {
 	if (!is_output) {
 
 	    // We add +1 for the bias weights.
-	    int n_rows_to_allocate = is_input ? n_rows : n_rows+1;
+	    int n_rows_to_allocate = n_rows+1;
 	    AllocateMemory(&weights, n_rows_to_allocate * n_cols);
 	    InitializeGaussian(weights, n_rows_to_allocate * n_cols);
 	    AllocateMemory(&grad, n_rows_to_allocate * n_cols);
 	}
+
 	AllocateMemory(&D, n_rows * batchsize);
     }
 
@@ -63,14 +67,13 @@ class NNLayer {
 
     void ForwardPropagate(double *data) {
 
-	// Be sure to memset next->S as gemm += rather than =.
-	if (next) {
-	    memset(next->S, 0, sizeof(double) * batchsize * n_cols);
-	}
-
 	if (is_input) {
 	    // Compute S = Input * W
-	    memcpy(input, data, sizeof(double) * batchsize * n_rows);
+	    for (int i = 0; i < batchsize; i++) {
+		for (int j = 0; j < n_rows; j++) {
+		    input[i*(n_rows+1)+j] = data[i*n_rows+j];
+		}
+	    }
 	    MatrixMultiply(input, weights, next->S,
 			   batchsize, n_cols, n_rows,
 			   n_rows, n_cols, n_cols);
@@ -89,6 +92,9 @@ class NNLayer {
 	    // Compute F_i = f'_i(S_i)^T
 	    ReluActivationGradient(S, F, batchsize, n_rows, n_rows, n_rows);
 
+	    // Be sure to memset next->S as gemm += rather than =.
+	    memset(next->S, 0, sizeof(double) * batchsize * n_cols);
+
 	    // Compute S_j = Z_i W_i
 	    MatrixMultiply(Z, weights, next->S,
 			   batchsize, n_cols, n_rows+1,
@@ -98,22 +104,52 @@ class NNLayer {
 	next->ForwardPropagate(data);
     }
 
+    void ApplyGrad(double learning_rate) {
+	int n_functional_rows = is_input ? n_rows+1 : n_rows;
+	MatrixAdd(weights, grad, weights,
+		  1, -learning_rate,
+		  n_functional_rows, n_cols,
+		  n_cols, n_cols, n_cols);
+    }
+
     void BackPropagate(double *labels) {
 
 	memset(D, 0, sizeof(double) * n_rows * batchsize);
 
 	if (is_output) {
-	    MatrixAdd(output, labels, D, 1, -1,
+	    // Here we actually have D'
+	    MatrixAdd(Z, labels, D, 1, -1,
 		      batchsize, Dimension(),
-		      Dimension(), Dimension(), Dimension());
+		      n_rows+1, Dimension(), Dimension());
 	}
 	else {
-	    int n_weight_rows = is_input ? n_rows : n_rows+1;
-	    //MatrixMultiply(weights, next->D, D,
-	    //n_weight_rows, batchsize, n_cols,
 
-	    std::cout << n_weight_rows << " " << n_cols << " vs " << next->n_rows << " " << next->batchsize << std::endl;
-	    std::cout << n_rows << " " << batchsize << std::endl;
+	    // Compute D' * W'
+	    MatrixMultiplyTransB(next->D, weights, D,
+				 batchsize, n_rows, n_cols,
+				 n_cols, n_cols, n_rows);
+
+	    // Compute D'
+	    MultiplyEntrywise(D, F, D,
+			      batchsize, n_rows,
+			      n_rows, n_rows, n_rows);
+
+	    memset(grad, 0, sizeof(double) * n_rows * n_cols);
+	    if (is_input) {
+		MatrixMultiplyTransA(input, next->D, grad,
+				     n_rows, n_cols, batchsize,
+				     n_rows, n_cols, n_cols);
+	    }
+	    else {
+		MatrixMultiplyTransA(Z, next->D, grad,
+				     n_rows+1, n_cols, batchsize,
+				     n_rows+1, n_cols, n_cols);
+	    }
+
+	    //std::cout << n_rows << " " << n_cols << " vs " << next->n_rows << " " << next->batchsize << std::endl;
+	    //std::cout << n_rows << " " << batchsize << std::endl;
+
+	    ApplyGrad(1e-5);
 	}
 
 	if (prev)
@@ -129,6 +165,7 @@ class NNLayer {
 	return output;
     }
 
+
     ~NNLayer() {
 	if (weights != NULL) free(weights);
 	if (S != NULL) free(S);
@@ -138,13 +175,14 @@ class NNLayer {
 	if (output != NULL) free(output);
     }
 
+    double *weights, *S, *Z, *F, *input, *output, *D, *grad;
+
  private:
 
     // Note that n_cols does account for the implicit column of noes
     // for the bias.
     int n_rows, n_cols, batchsize, step;
     bool is_input, is_output;
-    double *weights, *S, *Z, *F, *input, *output, *D, *grad;
     NNLayer *next, *prev;
 
     void InitializeGaussian(double *ptr, int n_elements) {

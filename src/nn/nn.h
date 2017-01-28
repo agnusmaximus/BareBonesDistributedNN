@@ -51,7 +51,14 @@ class NN {
 	    }
 	    ForwardPropagate(batch_data_placeholder);
 	    BackPropagate(batch_labels_placeholder);
+
+	    if (index == 0) {
+		//PrintMatrix(layers[layers.size()-2]->weights, 200, 10);
+		//exit(0);
+	    }
+	    break;
 	}
+
 	free(batch_data_placeholder);
 	free(batch_labels_placeholder);
     }
@@ -157,10 +164,8 @@ void test_nn() {
     NNParams *params = new NNParams();
     int batch_size = 128;
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
-    params->AddLayer(IMAGE_X*IMAGE_Y, 300);
-    params->AddLayer(300, 100);
-    params->AddLayer(100, 200);
-    params->AddLayer(200, N_CLASSES);
+    params->AddLayer(IMAGE_X*IMAGE_Y, 50);
+    params->AddLayer(50, N_CLASSES);
     NN *nn = new NN(params, batch_size);
     int number_of_images, image_size;
     int number_of_labels;

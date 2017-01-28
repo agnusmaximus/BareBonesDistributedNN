@@ -101,7 +101,12 @@ void MNISTImageToInput(int batchsize, uchar **images, double *output) {
 
     for (int i = 0; i < batchsize; i++) {
 	for (int j = 0; j < IMAGE_X*IMAGE_Y; j++) {
-	    output[i * IMAGE_X*IMAGE_Y + j] = images[i][j];
+	    if (images[i][j] != 0) {
+		output[i * IMAGE_X*IMAGE_Y + j] = (images[i][j] - 128) / (double)255;
+	    }
+	    else {
+		output[i * IMAGE_X*IMAGE_Y + j] = 0;
+	    }
 	}
     }
 }
@@ -110,7 +115,7 @@ void MNISTOneHotLabelsToInput(int batchsize, uchar *labels, double *output) {
     for (int i = 0; i < batchsize; i++) {
 	double *output_row = &output[i*N_CLASSES];
 	memset(output_row, 0, sizeof(double) * N_CLASSES);
-	output_row[labels[i]] = 1;
+	output_row[(int)labels[i]] = 1;
     }
 }
 
