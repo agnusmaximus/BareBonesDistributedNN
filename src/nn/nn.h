@@ -130,7 +130,8 @@ void test_nn() {
     int batch_size = 128;
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
     params->AddLayer(IMAGE_X*IMAGE_Y, 400);
-    params->AddLayer(400, N_CLASSES);
+    params->AddLayer(400, 500);
+    params->AddLayer(500, N_CLASSES);
     NN *nn = new NN(params, batch_size);
     int number_of_images, image_size;
     int number_of_labels;

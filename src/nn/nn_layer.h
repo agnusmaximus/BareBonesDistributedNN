@@ -49,7 +49,7 @@ class NNLayer {
 
 	    // We add +1 for the bias weights.
 	    int n_rows_to_allocate = is_input ? n_rows : n_rows+1;
-	    AllocateMemory(&weights, n_rows * n_cols);
+	    AllocateMemory(&weights, n_rows_to_allocate * n_cols);
 	    InitializeGaussian(weights, n_rows_to_allocate * n_cols);
 	}
     }
@@ -94,6 +94,18 @@ class NNLayer {
 
 	}
 	next->ForwardPropagate(data);
+    }
+
+    void BackPropagate(double *labels) {
+	if (is_output) {
+
+	}
+	else {
+
+	}
+
+	if (prev)
+	    prev->BackPropagate(labels);
     }
 
     int Dimension() {
