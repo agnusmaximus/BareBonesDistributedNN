@@ -100,6 +100,27 @@ void ReluActivationGradient(double *in, double *out,
     }
 }
 
+void SigmoidActivation(double *in, double *out,
+		       int n_rows, int n_cols,
+		       int ld_in, int ld_out) {
+    for (int i = 0; i < n_rows; i++) {
+	for (int j = 0; j < n_cols; j++) {
+	    out[i*ld_out+j] = 1 / (double)(1 + exp(-in[i*ld_in+j]));
+	}
+    }
+}
+
+void SigmoidActivationGradient(double *in, double *out,
+			       int n_rows, int n_cols,
+			       int ld_in, int ld_out) {
+    for (int i = 0; i < n_rows; i++) {
+	for (int j = 0; j < n_cols; j++) {
+	    double sig = 1 / (double)(1 + exp(-in[i*ld_in+j]));
+	    out[i*ld_out+j] = sig * (1 - sig);
+	}
+    }
+}
+
 void Softmax(double *in, double *out, int length) {
     double s = 0, maximum = -INF;
     for (int i = 0; i < length; i++) {

@@ -100,10 +100,10 @@ class NNLayer {
 	    }
 
 	    // Compute Z_i = f(S_i)
-	    ReluActivation(S, Z, batchsize, n_rows, n_rows, n_rows+1);
+	    SigmoidActivation(S, Z, batchsize, n_rows, n_rows, n_rows+1);
 
 	    // Compute F_i = f'_i(S_i)^T
-	    ReluActivationGradient(S, F, batchsize, n_rows, n_rows, n_rows);
+	    SigmoidActivationGradient(S, F, batchsize, n_rows, n_rows, n_rows);
 
 	    // Compute S_j = Z_i W_i
 	    MatrixMultiply(Z, weights, next->S,
