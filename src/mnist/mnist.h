@@ -101,12 +101,7 @@ void MNISTImageToInput(int batchsize, uchar **images, double *output) {
 
     for (int i = 0; i < batchsize; i++) {
 	for (int j = 0; j < IMAGE_X*IMAGE_Y; j++) {
-	    if (images[i][j] != 0) {
-		output[i * IMAGE_X*IMAGE_Y + j] = ((double)images[i][j] - 128) / (double)255;
-	    }
-	    else {
-		output[i * IMAGE_X*IMAGE_Y + j] = 0;
-	    }
+	    output[i * IMAGE_X*IMAGE_Y + j] = images[i][j] / (double)255;
 	}
     }
 }

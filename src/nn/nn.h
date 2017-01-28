@@ -165,9 +165,8 @@ void test_nn() {
     NNParams *params = new NNParams();
     int batch_size = 128;
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
-    params->AddLayer(IMAGE_X*IMAGE_Y, 100);
-    params->AddLayer(100, 100);
-    params->AddLayer(100, N_CLASSES);
+    params->AddLayer(IMAGE_X*IMAGE_Y, 300);
+    params->AddLayer(300, N_CLASSES);
     NN *nn = new NN(params, batch_size, .05);
     int number_of_images, number_of_test_images, image_size;
     int number_of_labels, number_of_test_labels;
@@ -176,7 +175,7 @@ void test_nn() {
     uchar **test_images = read_mnist_images(TEST_IMAGES, number_of_test_images, image_size);
     uchar *test_labels = read_mnist_labels(TEST_LABELS, number_of_test_labels);
 
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 500; i++) {
 	if (i % 10 == 0) {
 	    double loss = nn->ComputeLoss(images, labels, number_of_images);
 	    double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
