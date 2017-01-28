@@ -2,6 +2,7 @@
 #define _MNIST_
 
 #include <iostream>
+#include <cstring>
 #include <cassert>
 #include <string>
 #include <fstream>

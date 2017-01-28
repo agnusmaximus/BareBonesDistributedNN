@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <cstring>
 #include <vector>
 #include "nn_params.h"
 #include "nn_layer.h"

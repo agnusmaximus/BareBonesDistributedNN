@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <cstring>
 #include <cblas.h>
 #include <vector>
 #include <random>
