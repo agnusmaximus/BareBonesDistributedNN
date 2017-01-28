@@ -60,6 +60,12 @@ class NNLayer {
     }
 
     void ForwardPropagate(double *data) {
+
+	// Be sure to memset next->S as gemm += rather than =.
+	if (next) {
+	    memset(next->S, 0, sizeof(double) * batchsize * n_cols);
+	}
+
 	if (is_input) {
 	    // Compute S = Input * W
 	    memcpy(input, data, sizeof(double) * batchsize * n_rows);

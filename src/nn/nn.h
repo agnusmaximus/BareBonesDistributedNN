@@ -2,6 +2,7 @@
 #define _NN_
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include "nn_params.h"
 #include "nn_layer.h"
@@ -56,6 +57,8 @@ class NN {
 	    loss += ComputeBatchLoss(batch_data_placeholder,
 				     batch_labels_placeholder);
 	}
+	free(batch_data_placeholder);
+	free(batch_labels_placeholder);
 	return loss;
     }
 
@@ -87,6 +90,8 @@ class NN {
 		if (prediction != truth) n_wrong++;
 	    }
 	}
+	free(batch_data_placeholder);
+	free(batch_labels_placeholder);
 	return n_wrong / n_examples;
     }
 
@@ -116,6 +121,9 @@ class NN {
 
 void test_nn() {
 
+    std::cout << std::fixed << std::showpoint;
+    std::cout << std::setprecision(10);
+
     std::cout << "Test nn..." << std::endl;
 
     NNParams *params = new NNParams();
@@ -128,11 +136,14 @@ void test_nn() {
     int number_of_labels;
     uchar **images = read_mnist_images(TRAINING_IMAGES, number_of_images, image_size);
     uchar *labels = read_mnist_labels(TRAINING_LABELS, number_of_labels);
-    double loss = nn->ComputeLoss(images, labels, number_of_images);
-    double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
 
-    std::cout << "Loss: " << loss << std::endl;
-    std::cout << "Error rate: " << err_rate << std::endl;
+    for (int i = 0; i < 10; i++) {
+	double loss = nn->ComputeLoss(images, labels, number_of_images);
+	double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
+
+	std::cout << "Loss: " << loss << std::endl;
+	std::cout << "Error rate: " << err_rate << std::endl;
+    }
 
     delete nn;
     delete params;
