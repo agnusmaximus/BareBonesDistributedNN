@@ -173,7 +173,6 @@ class NNLayer {
 				     n_rows+1, n_cols, n_cols);
 	    }
 
-	    //PrintMatrix(weights, n_rows+1, n_cols);
 	    ApplyGrad(lr);
 	}
     }

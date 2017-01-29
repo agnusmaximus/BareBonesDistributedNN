@@ -127,6 +127,7 @@ class NN {
     // and batch_labels placeholder. Return true if finished epoch.
     bool FillNextBatch(uchar **data, uchar *labels, int n_examples) {
 	static int index = 0;
+	if (index >= n_examples) index = 0;
 	int n_features = layers[0]->Dimension();
 	int n_outputs = layers[layers.size()-1]->Dimension();
 	int n_to_copy = std::min(batchsize, n_examples-index);

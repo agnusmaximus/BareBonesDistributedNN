@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <unistd.h>
+#include <time.h>
 #include <cassert>
 #include "../mnist/mnist.h"
 #include "../nn/nn.h"

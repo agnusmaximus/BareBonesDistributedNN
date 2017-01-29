@@ -2,6 +2,7 @@
 #include <mpi.h>
 #include "distributed/distributed_defines.h"
 #include "distributed/worker_nn.h"
+#include "distributed/sync_replicas_master_nn.h"
 
 int main(void) {
     // Initialize the MPI environment
@@ -37,12 +38,20 @@ int main(void) {
     uchar *labels = read_mnist_labels(TRAINING_LABELS, number_of_labels);
     uchar **test_images = read_mnist_images(TEST_IMAGES, number_of_test_images, image_size);
     uchar *test_labels = read_mnist_labels(TEST_LABELS, number_of_test_labels);
+    MNISTShuffleDataAndLabels(images, labels, number_of_images);
+
+    std::vector<MPI_Comm> layer_comms(params->GetLayers().size());
+    for (int i = 0; i < layer_comms.size(); i++) {
+	MPI_Comm_dup(MPI_COMM_WORLD, &layer_comms[i]);
+    }
 
     if (rank == MASTER_RANK) {
-
+	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs);
+	master->Train(test_images, test_labels, number_of_test_images);
+	delete master;
     }
     else {
-	WorkerNN *worker = new WorkerNN(params, rank, n_procs);
+	WorkerNN *worker = new WorkerNN(params, layer_comms, rank, n_procs, false);
 	worker->Train(test_images, test_labels, number_of_test_images);
 	delete worker;
     }
