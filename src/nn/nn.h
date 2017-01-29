@@ -168,13 +168,15 @@ void test_nn() {
     std::cout << "Test nn..." << std::endl;
 
     NNParams *params = new NNParams();
-    int batch_size = 128;
+    int batch_size = 10000;
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
-    params->AddLayer(IMAGE_X*IMAGE_Y, 100);
-    params->AddLayer(100, 100);
+    params->AddLayer(IMAGE_X*IMAGE_Y, 500);
+    params->AddLayer(500, 800);
+    params->AddLayer(800, 200);
+    params->AddLayer(200, 100);
     params->AddLayer(100, N_CLASSES);
     params->SetBatchsize(batch_size);
-    params->SetLearningRate(.01);
+    params->SetLearningRate(1e-5);
     NN *nn = new NN(params);
     int number_of_images, number_of_test_images, image_size;
     int number_of_labels, number_of_test_labels;
@@ -183,15 +185,14 @@ void test_nn() {
     uchar **test_images = read_mnist_images(TEST_IMAGES, number_of_test_images, image_size);
     uchar *test_labels = read_mnist_labels(TEST_LABELS, number_of_test_labels);
 
-    for (int i = 0; i < 20; i++) {
-	if (i % 10 == 0) {
-	    double loss = nn->ComputeLoss(images, labels, number_of_images);
-	    double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
-	    double test_err_rate = nn->ComputeErrorRate(test_images, test_labels, number_of_test_images);
-	    std::cout << "Loss: " << loss << std::endl;
-	    std::cout << "Train Error rate: " << err_rate << std::endl;
-	    std::cout << "Test Error rate: " << test_err_rate << std::endl;
-	}
+    for (int i = 0; i < 1000000; i++) {
+	number_of_images = number_of_test_images = batch_size;
+	double loss = nn->ComputeLoss(images, labels, number_of_images);
+	double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
+	double test_err_rate = nn->ComputeErrorRate(test_images, test_labels, number_of_test_images);
+	std::cout << "Loss: " << loss << std::endl;
+	std::cout << "Train Error rate: " << err_rate << std::endl;
+	std::cout << "Test Error rate: " << test_err_rate << std::endl;
 	nn->Train(images, labels, number_of_images);
     }
 

@@ -68,6 +68,7 @@ class NNLayer {
     }
 
     void ForwardPropagate(double *data) {
+	std::cout << GetDescription() << ": Forward propagate - " << GetTimeMillis() << std::endl;;
 	ForwardPropagateCore(data);
 	if (next)
 	    next->ForwardPropagate(data);
@@ -81,53 +82,15 @@ class NNLayer {
     }
 
     void BackPropagate(double *labels) {
+	std::cout << GetDescription() << ": Back propagate - " << GetTimeMillis() << std::endl;
 	BackPropagateCore(labels);
 	if (prev)
 	    prev->BackPropagate(labels);
     }
 
-    void IncStep() {
-	step++;
-	//lr *= .90;
+    string GetDescription() {
+	return "Layer " + std::to_string(n_rows) + "x" + std::to_string(n_cols);
     }
-
-    size_t GetLayerCount() {
-	return (n_rows+1) * n_cols;
-    }
-
-    double *GetLayer() {
-	return weights;
-    }
-
-    int Dimension() {
-	return n_rows;
-    }
-
-    double *Output() {
-	assert(is_output);
-	return output;
-    }
-
-
-    ~NNLayer() {
-	if (weights != NULL) free(weights);
-	if (S != NULL) free(S);
-	if (Z != NULL) free(Z);
-	if (F != NULL) free(F);
-	if (input != NULL) free(input);
-	if (output != NULL) free(output);
-    }
-
-    double *weights, *S, *Z, *F, *input, *output, *D, *grad;
-
- protected:
-
-    // Note that n_cols does account for the implicit column of noes
-    // for the bias.
-    int n_rows, n_cols, batchsize, step;
-    bool is_input, is_output;
-    NNLayer *next, *prev;
-    double lr;
 
     void ForwardPropagateCore(double *data) {
 
@@ -214,6 +177,49 @@ class NNLayer {
 	    ApplyGrad(lr);
 	}
     }
+
+    void IncStep() {
+	step++;
+	//lr *= .90;
+    }
+
+    size_t GetLayerCount() {
+	return (n_rows+1) * n_cols;
+    }
+
+    double *GetLayer() {
+	return weights;
+    }
+
+    int Dimension() {
+	return n_rows;
+    }
+
+    double *Output() {
+	assert(is_output);
+	return output;
+    }
+
+
+    ~NNLayer() {
+	if (weights != NULL) free(weights);
+	if (S != NULL) free(S);
+	if (Z != NULL) free(Z);
+	if (F != NULL) free(F);
+	if (input != NULL) free(input);
+	if (output != NULL) free(output);
+    }
+
+    double *weights, *S, *Z, *F, *input, *output, *D, *grad;
+
+ protected:
+
+    // Note that n_cols does account for the implicit column of noes
+    // for the bias.
+    int n_rows, n_cols, batchsize, step;
+    bool is_input, is_output;
+    NNLayer *next, *prev;
+    double lr;
 
     void InitializeGaussian(double *ptr, int n_elements) {
 	for (int i = 0; i < n_elements; i++) {
