@@ -20,6 +20,8 @@ class WorkerNN : public NN {
     void Train(uchar **data, uchar *labels, int n_examples) override {
 	// Worker distributed training. Fetch all layer weights.
 	AsynchronousFetchWeights();
+
+	for (int index = 0; index < n_examples; index += batchsize
     }
 
  protected:

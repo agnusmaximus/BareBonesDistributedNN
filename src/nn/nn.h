@@ -52,12 +52,12 @@ class NN {
 
     virtual void Train(uchar **data, uchar *labels, int n_examples) {
 
-	while (!FillNextBatch(data, labels, n_examples)) {
+	while (true) {
+	    bool finished_epoch = FillNextBatch(data, labels, n_examples);
 	    ForwardPropagate(batch_data_placeholder);
 	    BackPropagate(batch_labels_placeholder);
+	    if (finished_epoch) break;
 	}
-	ForwardPropagate(batch_data_placeholder);
-	BackPropagate(batch_labels_placeholder);
 
 	for (int l = 0; l < layers.size(); l++) {
 	    layers[l]->IncStep();
@@ -66,20 +66,21 @@ class NN {
 
     virtual double ComputeLoss(uchar **data, uchar *labels, int n_examples) {
 	double loss = 0;
-	while (!FillNextBatch(data, labels, n_examples)) {
+	while (true) {
+	    bool finished_epoch = FillNextBatch(data, labels, n_examples);
 	    loss += ComputeBatchLoss(batch_data_placeholder,
 				     batch_labels_placeholder,
 				     batchsize);
+	    if (finished_epoch) break;
 	}
-	loss += ComputeBatchLoss(batch_data_placeholder,
-				 batch_labels_placeholder,
-				 batchsize);
+
 	return loss;
     }
 
     virtual double ComputeErrorRate(uchar **data, uchar *labels, int n_examples) {
 	double n_wrong = 0, n_seen = 0;
-	while (!FillNextBatch(data, labels, n_examples)) {
+	while (true) {
+	    bool finished_epoch = FillNextBatch(data, labels, n_examples);
 	    ForwardPropagate(batch_data_placeholder);
 	    NNLayer *last = layers[layers.size()-1];
 	    double *predictions = last->Output();
@@ -89,6 +90,7 @@ class NN {
 		if (prediction != truth) n_wrong++;
 		n_seen++;
 	    }
+	    if (finished_epoch) break;
 	}
 	return n_wrong / n_seen;
     }
@@ -160,8 +162,8 @@ void test_nn() {
     std::cout << "Test nn..." << std::endl;
 
     NNParams *params = new NNParams();
-    //int batch_size = 10000;
     int batch_size = 128;
+    params->SetBatchsize(batch_size);
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
     //params->AddLayer(IMAGE_X*IMAGE_Y, 500);
     //params->AddLayer(500, 800);
@@ -170,7 +172,6 @@ void test_nn() {
     //params->AddLayer(100, N_CLASSES);
     params->AddLayer(IMAGE_X*IMAGE_Y, 100);
     params->AddLayer(100, N_CLASSES);
-    params->SetBatchsize(batch_size);
     params->SetLearningRate(1e-2);
     NN *nn = new NN(params);
     int number_of_images, number_of_test_images, image_size;
