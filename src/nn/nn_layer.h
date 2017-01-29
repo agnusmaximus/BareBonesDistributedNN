@@ -74,8 +74,8 @@ class NNLayer {
 	    next->ForwardPropagate(data);
     }
 
-    void ApplyGrad(double learning_rate) {
-	MatrixAdd(weights, grad, weights,
+    void ApplyGrad(double learning_rate, double *local_grad) {
+	MatrixAdd(weights, local_grad, weights,
 		  1, -learning_rate,
 		  n_rows+1, n_cols,
 		  n_cols, n_cols, n_cols);
@@ -84,6 +84,7 @@ class NNLayer {
     void BackPropagate(double *labels) {
 	//std::cout << GetDescription() << ": Back propagate - " << GetTimeMillis() << std::endl;
 	BackPropagateCore(labels);
+	ApplyGrad(lr, grad);
 	if (prev)
 	    prev->BackPropagate(labels);
     }
@@ -172,8 +173,6 @@ class NNLayer {
 				     n_rows+1, n_cols, batchsize,
 				     n_rows+1, n_cols, n_cols);
 	    }
-
-	    ApplyGrad(lr);
 	}
     }
 
@@ -188,6 +187,10 @@ class NNLayer {
 
     double *GetLayer() {
 	return weights;
+    }
+
+    double *GetGradient() {
+	return grad;
     }
 
     int Dimension() {

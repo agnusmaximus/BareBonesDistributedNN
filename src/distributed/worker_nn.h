@@ -12,14 +12,20 @@ class WorkerNN : public NN {
 	this->cur_step = STEP_UNINITIALIZED;
 	this->comm = MPI_COMM_WORLD;
 	this->next_step = STEP_UNINITIALIZED;
+	this->step_fetch_request = MPI_REQUEST_NULL;
 
 	for (int i = 0; i < layers.size(); i++) {
 	    layer_cur_step.push_back(STEP_UNINITIALIZED);
+	    layer_fetch_requests.push_back(MPI_REQUEST_NULL);
+	    layer_send_requests.push_back(MPI_REQUEST_NULL);
 	}
-	layer_requests.resize(layers.size());
     }
 
     void Train(uchar **data, uchar *labels, int n_examples) override {
+
+	// Boolean indicating whether it's the first pass through training.
+	// Not equivalent to step, as a worker can repeat a step.
+	static bool first_pass = true;
 
 	SynchronousFetchStep();
 	assert(UpdateStep());
@@ -32,32 +38,53 @@ class WorkerNN : public NN {
 	    AsynchronousFetchWeights();
 	    AsynchronousFetchStepUpdate();
 	    FillNextBatch(data, labels, n_examples);
+	    std::cout << "Worker " << rank << " on iteration " << cur_step << std::endl;
 
 	    // Forward propagate
 	    for (int i = 0; i < layers.size(); i++) {
+
+		// Handle short circuiting.
 		if (shortcircuit && StepChanged()) continue;
+
+		// Wait for the synced weight layer to be fetched
 		if (i != layers.size()-1) {
-		    MPI_Wait(&layer_requests[i], MPI_STATUS_IGNORE);
+		    MPI_Wait(&layer_fetch_requests[i], MPI_STATUS_IGNORE);
 		    layer_cur_step[i] = cur_step;
 		}
+
+		// Do forward propagation
 		layers[i]->ForwardPropagateCore(batch_data_placeholder);
 	    }
 
 	    // Back propagate
 	    for (int i = layers.size()-1; i >= 0; i--) {
+
+		// Short circuit
 		if (shortcircuit && StepChanged()) continue;
-		layers[i]->BackPropagateCore(batch_labels_placeholder);
+
+		// Wait for previous gradient to be sent.
 		if (i != layers.size()-1) {
-		    MPI_Request throwaway;
-		    MPI_Isend(layers[i]->GetLayer(),
+		    if (!first_pass) {
+			MPI_Wait(&layer_send_requests[i], MPI_STATUS_IGNORE);
+		    }
+		}
+
+		// Backpropagate core.
+		layers[i]->BackPropagateCore(batch_labels_placeholder);
+
+		// Send the layer's gradient.
+		if (i != layers.size()-1) {
+		    MPI_Isend(layers[i]->GetGradient(),
 			      layers[i]->GetLayerCount(),
 			      MPI_DOUBLE,
 			      MASTER_RANK,
 			      cur_step,
-			      this->comm,
-			      &throwaway);
+			      layer_comms[i],
+			      &layer_send_requests[i]);
 		}
 	    }
+
+	    first_pass = false;
 	}
     }
 
@@ -72,7 +99,8 @@ class WorkerNN : public NN {
     std::vector<int> layer_cur_step;
 
     // Requests for fetching each layer.
-    std::vector<MPI_Request> layer_requests;
+    std::vector<MPI_Request> layer_fetch_requests;
+    std::vector<MPI_Request> layer_send_requests;
 
     // Layer communicator handles
     std::vector<MPI_Comm> &layer_comms;
@@ -92,16 +120,14 @@ class WorkerNN : public NN {
     }
 
     void AsynchronousFetchStepUpdate() {
-	static bool first_fetch = true;
 	int completed_step_fetch = 0;
-	if (first_fetch)
+	if (step_fetch_request == MPI_REQUEST_NULL)
 	    completed_step_fetch = 1;
 	else
 	    MPI_Test(&step_fetch_request, &completed_step_fetch, MPI_STATUS_IGNORE);
 	if (completed_step_fetch) {
 	    AsynchronousFetchStep();
 	}
-	first_fetch = false;
     }
 
     void AsynchronousFetchStep() {
@@ -132,13 +158,19 @@ class WorkerNN : public NN {
 	    // Check if we have already fetched the weights for this
 	    // particular step. If so, don't fetch it.
 	    if (layer_cur_step[i] < cur_step) {
+
+		// Be sure to free the layer fetch requests
+		if (layer_fetch_requests[i] != MPI_REQUEST_NULL) {
+		    MPI_Request_free(&layer_fetch_requests[i]);
+		}
+
 		MPI_Irecv(layers[i]->GetLayer(),
 			  layers[i]->GetLayerCount(),
 			  MPI_DOUBLE,
 			  MASTER_RANK,
 			  cur_step,
 			  layer_comms[i],
-			  &layer_requests[i]);
+			  &layer_fetch_requests[i]);
 	    }
 	}
     }
