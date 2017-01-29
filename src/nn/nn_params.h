@@ -42,8 +42,26 @@ class NNParams {
 	return layers;
     }
 
+    void SetBatchsize(int batchsize) {
+	this->batchsize = batchsize;
+    }
+
+    void SetLearningRate(double learning_rate) {
+	this->learning_rate = learning_rate;
+    }
+
+    int GetBatchsize() {
+	return batchsize;
+    }
+
+    double GetLearningRate() {
+	return learning_rate;
+    }
+
  private:
 
+    int batchsize;
+    double learning_rate;
     std::vector<pair<int, int> > layers;
 
     void LayerInputDimensionWrong(int index, int expected) {

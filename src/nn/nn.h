@@ -11,8 +11,9 @@
 
 class NN {
  public:
-    NN(NNParams *params, int batchsize, double learning_rate) {
-	this->batchsize = batchsize;
+    NN(NNParams *params) {
+	this->batchsize = params->GetBatchsize();
+	this->learning_rate = params->GetLearningRate();
 	params->Validate(batchsize, N_CLASSES);
 	for (int i = 0; i < params->GetLayers().size()-1; i++) {
 	    std::pair<int, int> layer = params->GetLayers()[i];
@@ -134,6 +135,7 @@ class NN {
  private:
     std::vector<NNLayer *> layers;
     int batchsize;
+    double learning_rate;
 
     double ComputeBatchLoss(double *data, double *labels, int n_examples) {
 	assert(n_examples <= batchsize);
@@ -171,7 +173,9 @@ void test_nn() {
     params->AddLayer(IMAGE_X*IMAGE_Y, 100);
     params->AddLayer(100, 100);
     params->AddLayer(100, N_CLASSES);
-    NN *nn = new NN(params, batch_size, .01);
+    params->SetBatchsize(batch_size);
+    params->SetLearningRate(.01);
+    NN *nn = new NN(params);
     int number_of_images, number_of_test_images, image_size;
     int number_of_labels, number_of_test_labels;
     uchar **images = read_mnist_images(TRAINING_IMAGES, number_of_images, image_size);
@@ -179,7 +183,7 @@ void test_nn() {
     uchar **test_images = read_mnist_images(TEST_IMAGES, number_of_test_images, image_size);
     uchar *test_labels = read_mnist_labels(TEST_LABELS, number_of_test_labels);
 
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < 20; i++) {
 	if (i % 10 == 0) {
 	    double loss = nn->ComputeLoss(images, labels, number_of_images);
 	    double err_rate = nn->ComputeErrorRate(images, labels, number_of_images);
