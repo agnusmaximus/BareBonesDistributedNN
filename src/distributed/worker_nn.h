@@ -18,7 +18,7 @@ class WorkerNN : public NN {
     }
 
     void Train(uchar **data, uchar *labels, int n_examples) override {
-	// Worker distributed training. Fetch all
+	// Worker distributed training. Fetch all layer weights.
 	AsynchronousFetchWeights();
     }
 
@@ -35,10 +35,12 @@ class WorkerNN : public NN {
 
     // Fetch all layer weights asynchronously. (from master).
     void AsynchronousFetchWeights() {
-	for (int i = 0; i < layers.size(); i++) {
+
+	// Last layer has no weights.
+	for (int i = 0; i < layers.size()-1; i++) {
 	    // Check if we have already fetched the weights for this
 	    // particular step. If so, don't fetch it.
-	    assert(layer_cur_step[i] <= cur_step);
+	    std::cout << layers[i]->GetLayerCount() << std::endl;
 	    if (layer_cur_step[i] < cur_step) {
 		MPI_Irecv(layers[i]->GetLayer(),
 			  layers[i]->GetLayerCount(),

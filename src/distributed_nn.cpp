@@ -30,12 +30,20 @@ int main(void) {
     params->SetBatchsize(batch_size);
     params->SetLearningRate(.01);
 
+    // Load data
+    int number_of_images, number_of_test_images, image_size;
+    int number_of_labels, number_of_test_labels;
+    uchar **images = read_mnist_images(TRAINING_IMAGES, number_of_images, image_size);
+    uchar *labels = read_mnist_labels(TRAINING_LABELS, number_of_labels);
+    uchar **test_images = read_mnist_images(TEST_IMAGES, number_of_test_images, image_size);
+    uchar *test_labels = read_mnist_labels(TEST_LABELS, number_of_test_labels);
 
     if (rank == MASTER_RANK) {
 
     }
     else {
 	WorkerNN *worker = new WorkerNN(params, rank, n_procs);
+	worker->Train(test_images, test_labels, number_of_test_images);
 	delete worker;
     }
 

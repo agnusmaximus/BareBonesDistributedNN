@@ -68,7 +68,7 @@ class NNLayer {
     }
 
     void ForwardPropagate(double *data) {
-	std::cout << GetDescription() << ": Forward propagate - " << GetTimeMillis() << std::endl;;
+	//std::cout << GetDescription() << ": Forward propagate - " << GetTimeMillis() << std::endl;;
 	ForwardPropagateCore(data);
 	if (next)
 	    next->ForwardPropagate(data);
@@ -82,7 +82,7 @@ class NNLayer {
     }
 
     void BackPropagate(double *labels) {
-	std::cout << GetDescription() << ": Back propagate - " << GetTimeMillis() << std::endl;
+	//std::cout << GetDescription() << ": Back propagate - " << GetTimeMillis() << std::endl;
 	BackPropagateCore(labels);
 	if (prev)
 	    prev->BackPropagate(labels);
