@@ -1,5 +1,6 @@
 #include <iostream>
 #include <mpi.h>
+#include "distributed/distributed_defines.h"
 #include "distributed/worker_nn.h"
 
 int main(void) {
@@ -19,12 +20,26 @@ int main(void) {
     int name_len;
     MPI_Get_processor_name(processor_name, &name_len);
 
-    if (rank == 0) {
+    // Set NN Params
+    NNParams *params = new NNParams();
+    int batch_size = 128;
+    params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
+    params->AddLayer(IMAGE_X*IMAGE_Y, 100);
+    params->AddLayer(100, 100);
+    params->AddLayer(100, N_CLASSES);
+    params->SetBatchsize(batch_size);
+    params->SetLearningRate(.01);
+
+
+    if (rank == MASTER_RANK) {
 
     }
     else {
-
+	WorkerNN *worker = new WorkerNN(params, rank, n_procs);
+	delete worker;
     }
+
+    delete params;
 
     MPI_Barrier(MPI_COMM_WORLD);
 

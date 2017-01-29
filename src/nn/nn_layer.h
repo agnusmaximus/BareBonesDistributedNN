@@ -91,6 +91,14 @@ class NNLayer {
 	//lr *= .90;
     }
 
+    size_t GetLayerCount() {
+	return (n_rows+1) * n_cols;
+    }
+
+    double *GetLayer() {
+	return weights;
+    }
+
     int Dimension() {
 	return n_rows;
     }
