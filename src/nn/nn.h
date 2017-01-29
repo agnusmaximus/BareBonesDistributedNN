@@ -132,7 +132,7 @@ class NN {
 	}
     }
 
- private:
+ protected:
     std::vector<NNLayer *> layers;
     int batchsize;
     double learning_rate;

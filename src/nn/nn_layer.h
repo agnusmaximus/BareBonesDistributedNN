@@ -112,7 +112,7 @@ class NNLayer {
 
     double *weights, *S, *Z, *F, *input, *output, *D, *grad;
 
- private:
+ protected:
 
     // Note that n_cols does account for the implicit column of noes
     // for the bias.
