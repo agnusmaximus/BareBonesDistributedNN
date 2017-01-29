@@ -12,7 +12,7 @@ single_machine_run:
 	./single_machine_nn
 
 distributed:
-	$(MPICC) $(FLAGAS) src/distributed_nn.cpp $(LIBS) -o distributed_nn
+	$(MPICC) $(FLAGS) src/distributed_nn.cpp $(LIBS) -o distributed_nn
 
 distributed_run:
 	make distributed

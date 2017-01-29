@@ -5,8 +5,10 @@
 
 class WorkerNN : public NN {
  public:
-    WorkerNN(NNParams *params) : NN(params) {
+    WorkerNN(NNParams *params) : NN(params) { }
 
+    void Train(uchar **data, uchar *labels, int n_examples) override {
+	// Worker distributed training.
     }
 };
 

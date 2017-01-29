@@ -2,6 +2,7 @@
 #define _distributed_defines_
 
 #include <iostream>
+#include "../mnist/mnist.h"
 #include "../nn/nn.h"
 #include "../nn/nn_params.h"
 #include "../nn/nn_layer.h"
