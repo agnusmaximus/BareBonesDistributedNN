@@ -1,5 +1,6 @@
 #include <iostream>
 #include <mpi.h>
+#include "distributed/worker_nn.h"
 
 int main(void) {
     // Initialize the MPI environment

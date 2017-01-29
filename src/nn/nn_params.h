@@ -14,7 +14,7 @@ class NNParams {
     }
 
     void AddLayer(int in_layer_dim, int out_layer_dim) {
-	layers.push_back(make_pair(in_layer_dim, out_layer_dim));
+	layers.push_back(std::make_pair(in_layer_dim, out_layer_dim));
     }
 
     void Validate(int in_size, int out_size) {
@@ -38,7 +38,7 @@ class NNParams {
 	}
     }
 
-    std::vector<pair<int, int> > & GetLayers() {
+    std::vector<std::pair<int, int> > & GetLayers() {
 	return layers;
     }
 
@@ -62,7 +62,7 @@ class NNParams {
 
     int batchsize;
     double learning_rate;
-    std::vector<pair<int, int> > layers;
+    std::vector<std::pair<int, int> > layers;
 
     void LayerInputDimensionWrong(int index, int expected) {
 	std::cout << "Input dimension for nn is " << layers[index].first << " expected: " << expected << std::endl;

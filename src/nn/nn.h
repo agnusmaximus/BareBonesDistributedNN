@@ -34,7 +34,7 @@ class NN {
 	}
     }
 
-    void Train(uchar **data, uchar *labels, int n_examples) {
+    virtual void Train(uchar **data, uchar *labels, int n_examples) {
 	MNISTShuffleDataAndLabels(data, labels, n_examples);
 	int n_features = layers[0]->Dimension();
 	int n_outputs = layers[layers.size()-1]->Dimension();
@@ -65,7 +65,7 @@ class NN {
 	free(batch_labels_placeholder);
     }
 
-    double ComputeLoss(uchar **data, uchar *labels, int n_examples) {
+    virtual double ComputeLoss(uchar **data, uchar *labels, int n_examples) {
 	int n_features = layers[0]->Dimension();
 	int n_outputs = layers[layers.size()-1]->Dimension();
 	double *batch_data_placeholder = (double *)malloc(sizeof(double) * batchsize * n_features);
@@ -92,7 +92,7 @@ class NN {
 	return loss;
     }
 
-    double ComputeErrorRate(uchar **data, uchar *labels, int n_examples) {
+    virtual double ComputeErrorRate(uchar **data, uchar *labels, int n_examples) {
 	int n_features = layers[0]->Dimension();
 	int n_outputs = layers[layers.size()-1]->Dimension();
 	double *batch_data_placeholder = (double *)malloc(sizeof(double) * batchsize * n_features);
