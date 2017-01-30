@@ -28,8 +28,6 @@ int main(void) {
     char hostname[1024];
     gethostname(hostname, 1024);
 
-    std::cout << "Machine launched: " << processor_name << std::endl;
-
     // Set NN Params
     NNParams *params = new NNParams();
     int batch_size = 128;
@@ -55,6 +53,8 @@ int main(void) {
     for (int i = 0; i < layer_comms.size(); i++) {
 	MPI_Comm_dup(MPI_COMM_WORLD, &layer_comms[i]);
     }
+
+    std::cout << "Machine launched: " << hostname << std::endl;
 
     if (rank == MASTER_RANK) {
 	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-1);
