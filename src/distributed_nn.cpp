@@ -5,6 +5,9 @@
 #include "distributed/sync_replicas_master_nn.h"
 
 int main(void) {
+    std::cout << std::fixed << std::showpoint;
+    std::cout << std::setprecision(10);
+
     // Initialize the MPI environment
     MPI_Init(NULL, NULL);
 
@@ -26,11 +29,10 @@ int main(void) {
     int batch_size = 128;
     params->SetBatchsize(batch_size);
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
-    params->AddLayer(IMAGE_X*IMAGE_Y, 100);
-    //params->AddLayer(IMAGE_X*IMAGE_Y, 500);
-    //params->AddLayer(500, 800);
-    //params->AddLayer(800, 200);
-    //params->AddLayer(200, 100);
+    params->AddLayer(IMAGE_X*IMAGE_Y, 500);
+    params->AddLayer(500, 800);
+    params->AddLayer(800, 200);
+    params->AddLayer(200, 100);
     params->AddLayer(100, N_CLASSES);
     params->SetLearningRate(1e-2);
 
@@ -54,7 +56,7 @@ int main(void) {
 	delete master;
     }
     else {
-	WorkerNN *worker = new WorkerNN(params, layer_comms, rank, n_procs, false);
+	WorkerNN *worker = new WorkerNN(params, layer_comms, rank, n_procs, true);
 	worker->Train(test_images, test_labels, number_of_test_images);
 	delete worker;
     }
