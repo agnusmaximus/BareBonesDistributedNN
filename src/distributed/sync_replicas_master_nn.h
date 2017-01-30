@@ -68,6 +68,7 @@ class SyncReplicasMasterNN : public NN {
 
 			// Apply gradient
 			layers[layer_received]->ApplyGrad(learning_rate, grad_buffers[layer_received][copy_index]);
+			memset(grad_buffers[layer_received][copy_index], 0, sizeof(double) * layers[layer_received]->GetLayerCount());
 
 			enough_gradients_received = true;
 			for (int i = 0; i < layers.size()-1; i++) {
@@ -84,7 +85,7 @@ class SyncReplicasMasterNN : public NN {
 	    std::fill(gradients_accumulated.begin(),
 		      gradients_accumulated.end(), 0);
 
-	    if (cur_step % 50 == 0) {
+	    if (cur_step % 20 == 0) {
 		double err_rate = ComputeErrorRate(data, labels, examples);
 		double loss = ComputeLoss(data, labels, examples);
 		double time = GetTimeMillis() - time_start;
