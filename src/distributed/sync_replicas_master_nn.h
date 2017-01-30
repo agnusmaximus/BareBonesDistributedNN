@@ -15,7 +15,6 @@ class SyncReplicasMasterNN : public NN {
 	    for (int j = 0; j < n_procs; j++) {
 		layer_send_requests[i].push_back(MPI_REQUEST_NULL);
 	    }
-	    gradient_fetch_requests.push_back(MPI_REQUEST_NULL);
 	}
     }
 
@@ -26,7 +25,7 @@ class SyncReplicasMasterNN : public NN {
 		  gradients_accumulated.end(),
 		  0);
 
-	AsynchronousFetchGradients();
+	AsynchronousFetchGradientsContinuous();
 
 	while (true) {
 	    AsynchronousBroadcastStep();
@@ -36,28 +35,39 @@ class SyncReplicasMasterNN : public NN {
 	    while (!enough_gradients_received) {
 
 		// While we don't have enough gradients, keep waiting to receive them.
-		int layer_received = -1;
+		int index_received = -1;
 		MPI_Status stat;
 		MPI_Waitany(layers.size()-1,
-			    gradient_fetch_requests.data(),
-			    &layer_received,
+			    &gradient_fetch_requests[0],
+			    &index_received,
 			    &stat);
+
+		// We push N_RECV_REQUESTS_PER_LAYER per layer. The layer is
+		// index / N_RECV_REQUESTS_PER_LAYER
+		int layer_received = index_received / N_RECV_REQUESTS_PER_LAYER;
 
 		// Received a gradient for this layer... Initiate a new
 		// request to receive another one at the layer.
-		AsynchronousFetchGradient(layer_received);
+		AsynchronousFetchGradient(layer_received, &gradient_fetch_requests[index_received]);
 
 		if (stat.MPI_TAG == cur_step) {
-		    gradients_accumulated[layer_received]++;
-		    std::cout << "Received: ";
-		    for (int i = 0; i < layers.size()-1; i++) {
-			std::cout << gradients_accumulated[i] << " ";
-		    }
-		    std::cout << endl;
 
-		    enough_gradients_received = true;
-		    for (int i = 0; i < layers.size()-1; i++) {
-			enough_gradients_received = enough_gradients_received && gradients_accumulated[i] >= n_to_collect;
+		    int count = 0;
+		    MPI_Get_count(&stat, MPI_DOUBLE, &count);
+		    assert(count == layers[layer_received]->GetLayerCount());
+
+		    if (gradients_accumulated[layer_received] < n_to_collect) {
+			gradients_accumulated[layer_received]++;
+			std::cout << "Received: ";
+			for (int i = 0; i < layers.size()-1; i++) {
+			    std::cout << gradients_accumulated[i] << " ";
+			}
+			std::cout << endl;
+
+			enough_gradients_received = true;
+			for (int i = 0; i < layers.size()-1; i++) {
+			    enough_gradients_received = enough_gradients_received && gradients_accumulated[i] >= n_to_collect;
+			}
 		    }
 		}
 	    }
@@ -84,20 +94,28 @@ class SyncReplicasMasterNN : public NN {
 	}
     }
 
-    void AsynchronousFetchGradient(int l) {
+    void AsynchronousFetchGradient(int l, MPI_Request *req) {
 	MPI_Irecv(layers[l]->GetGradient(),
 		  layers[l]->GetLayerCount(),
 		  MPI_DOUBLE,
 		  MPI_ANY_SOURCE,
 		  MPI_ANY_TAG,    // Any gradient from any iteration may be fetched.
 		  layer_comms[l],
-		  &gradient_fetch_requests[l]);
+		  req);
     }
 
-    void AsynchronousFetchGradients() {
-	// Assume that gradient fetch requests have all been cancelled & completed.
+    void AsynchronousFetchGradientsContinuous() {
+	for (int i = 0; i < layers.size()-1; i++) {
+	    for (int k = 0; k < N_RECV_REQUESTS_PER_LAYER; k++) {
+		gradient_fetch_requests.push_back(MPI_REQUEST_NULL);
+	    }
+	}
+
+	// We initiate a ton of requests to receive gradients for each layer.
 	for (int l = 0; l < layers.size()-1; l++) {
-	    AsynchronousFetchGradient(l);
+	    for (int k = 0; k < N_RECV_REQUESTS_PER_LAYER; k++) {
+		AsynchronousFetchGradient(l, &gradient_fetch_requests[l*N_RECV_REQUESTS_PER_LAYER+k]);
+	    }
 	}
     }
 
