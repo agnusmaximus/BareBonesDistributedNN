@@ -26,9 +26,11 @@ int main(void) {
     int batch_size = 128;
     params->SetBatchsize(batch_size);
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
-    params->AddLayer(500, 800);
-    params->AddLayer(800, 200);
-    params->AddLayer(200, 100);
+    params->AddLayer(IMAGE_X*IMAGE_Y, 100);
+    //params->AddLayer(IMAGE_X*IMAGE_Y, 500);
+    //params->AddLayer(500, 800);
+    //params->AddLayer(800, 200);
+    //params->AddLayer(200, 100);
     params->AddLayer(100, N_CLASSES);
     params->SetLearningRate(1e-2);
 

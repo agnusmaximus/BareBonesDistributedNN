@@ -45,7 +45,7 @@ class WorkerNN : public NN {
 	    //CancelLayerRequests();
 	    AsynchronousFetchWeights();
 	    FillNextBatch(data, labels, n_examples);
-	    std::cout << "Worker " << rank << " on iteration " << cur_step << std::endl;
+	    //std::cout << "Worker " << rank << " on iteration " << cur_step << std::endl;
 
 	    // Forward propagate
 	    for (int i = 0; i < layers.size(); i++) {
