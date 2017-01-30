@@ -63,6 +63,12 @@ class SyncReplicasMasterNN : public NN {
 		    MPI_Get_count(&stat, MPI_DOUBLE, &count);
 		    assert(count == layers[layer_received]->GetLayerCount());
 
+		    std::cout << "Gradients accumulated: ";
+		    for (int i = 0; i < layers.size(); i++) {
+			std::cout << gradients_accumulated[i] << " ";
+		    }
+		    std::cout << endl;
+
 		    if (gradients_accumulated[layer_received] < n_to_collect) {
 			gradients_accumulated[layer_received]++;
 
