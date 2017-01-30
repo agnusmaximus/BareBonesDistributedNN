@@ -24,6 +24,8 @@ int main(void) {
     int name_len;
     MPI_Get_processor_name(processor_name, &name_len);
 
+    std::cout << "Machine launched: " << processor_name << std::endl;
+
     // Set NN Params
     NNParams *params = new NNParams();
     int batch_size = 128;
