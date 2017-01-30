@@ -40,6 +40,7 @@ class WorkerNN : public NN {
 	std::cout << "Worker " << rank << " starting training..." << std::endl;
 
 	while (true) {
+
 	    AsynchronousFetchStepUpdate();
 	    UpdateStep();
 	    AsynchronousFetchWeights();
@@ -129,6 +130,12 @@ class WorkerNN : public NN {
 	return changed;
     }
 
+    int NewStepQueued() {
+	int found_step = 0;
+	MPI_Iprobe(0, STEP_TAG, this->comm, &found_step, MPI_STATUS_IGNORE);
+	return found_step;
+    }
+
     void AsynchronousFetchStepUpdate() {
 	int completed_step_fetch = 0;
 	if (step_fetch_request == MPI_REQUEST_NULL)
@@ -141,6 +148,15 @@ class WorkerNN : public NN {
     }
 
     void AsynchronousFetchStep() {
+	while (NewStepQueued()) {
+	    MPI_Irecv(&next_step,
+		      1,
+		      MPI_INT,
+		      MASTER_RANK,
+		      STEP_TAG,
+		      this->comm,
+		      &step_fetch_request);
+	}
 	MPI_Irecv(&next_step,
 		  1,
 		  MPI_INT,
