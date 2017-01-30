@@ -58,11 +58,15 @@ class SyncReplicasMasterNN : public NN {
 
 		    if (gradients_accumulated[layer_received] < n_to_collect) {
 			gradients_accumulated[layer_received]++;
+
 			std::cout << "Received: ";
 			for (int i = 0; i < layers.size()-1; i++) {
 			    std::cout << gradients_accumulated[i] << " ";
 			}
 			std::cout << endl;
+
+			// Apply gradient
+			layers[layer_received]->ApplyGrad(learning_rate, layers[layer_received]->GetGradient());
 
 			enough_gradients_received = true;
 			for (int i = 0; i < layers.size()-1; i++) {
