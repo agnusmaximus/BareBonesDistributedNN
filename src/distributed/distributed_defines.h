@@ -2,6 +2,7 @@
 #define _distributed_defines_
 
 #include <iostream>
+#include <list>
 #include <vector>
 #include <map>
 #include <unistd.h>
@@ -17,5 +18,6 @@
 #define STEP_START 1
 #define STEP_UNINITIALIZED (STEP_START-1)
 #define MASTER_RANK 0
+#define SEND_BUFFER_FACTOR 50
 
 #endif

@@ -3,6 +3,13 @@
 
 #include "distributed_defines.h"
 
+struct LayerSendRequest {
+    MPI_Request request;
+    int step;
+};
+
+typedef struct LayerSendRequest LayerSendRequest;
+
 class WorkerNN : public NN {
  public:
    WorkerNN(NNParams *params, std::vector<MPI_Comm> &layer_comms, int rank, int n_procs, bool shortcircuit) : NN(params), layer_comms(layer_comms) {
@@ -25,7 +32,6 @@ class WorkerNN : public NN {
 
 	// Boolean indicating whether it's the first pass through training.
 	// Not equivalent to step, as a worker can repeat a step.
-	static bool first_pass = true;
 
 	SynchronousFetchStep();
 	assert(UpdateStep());
@@ -34,9 +40,10 @@ class WorkerNN : public NN {
 	std::cout << "Worker " << rank << " starting training..." << std::endl;
 
 	while (true) {
-	    UpdateStep();
-	    AsynchronousFetchWeights();
 	    AsynchronousFetchStepUpdate();
+	    UpdateStep();
+	    //CancelLayerRequests();
+	    AsynchronousFetchWeights();
 	    FillNextBatch(data, labels, n_examples);
 	    std::cout << "Worker " << rank << " on iteration " << cur_step << std::endl;
 
@@ -62,9 +69,9 @@ class WorkerNN : public NN {
 		// Short circuit
 		if (shortcircuit && StepChanged()) continue;
 
-		// Wait for previous gradient to be sent.
+		// Check that the previous gradient has been sent
 		if (i != layers.size()-1) {
-		    if (!first_pass) {
+		    if (layer_send_requests[i] != MPI_REQUEST_NULL) {
 			MPI_Wait(&layer_send_requests[i], MPI_STATUS_IGNORE);
 		    }
 		}
@@ -74,6 +81,8 @@ class WorkerNN : public NN {
 
 		// Send the layer's gradient.
 		if (i != layers.size()-1) {
+
+		    // Do a buffered send to avoid having to wait for recv on the other end.
 		    MPI_Isend(layers[i]->GetGradient(),
 			      layers[i]->GetLayerCount(),
 			      MPI_DOUBLE,
@@ -83,8 +92,6 @@ class WorkerNN : public NN {
 			      &layer_send_requests[i]);
 		}
 	    }
-
-	    first_pass = false;
 	}
     }
 
@@ -114,9 +121,9 @@ class WorkerNN : public NN {
 
     // Returns whether fetched new step was different from cur step.
     bool UpdateStep() {
-	int last_step = cur_step;
+	bool changed = cur_step != next_step;
 	cur_step = next_step;
-	return last_step != cur_step;
+	return changed;
     }
 
     void AsynchronousFetchStepUpdate() {
