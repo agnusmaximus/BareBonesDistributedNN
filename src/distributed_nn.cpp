@@ -1,5 +1,6 @@
 #include <iostream>
 #include <mpi.h>
+#include <unistd.h>
 #include "distributed/distributed_defines.h"
 #include "distributed/worker_nn.h"
 #include "distributed/sync_replicas_master_nn.h"
@@ -23,6 +24,9 @@ int main(void) {
     char processor_name[MPI_MAX_PROCESSOR_NAME];
     int name_len;
     MPI_Get_processor_name(processor_name, &name_len);
+
+    char hostname[1024];
+    gethostname(hostname, 1024);
 
     std::cout << "Machine launched: " << processor_name << std::endl;
 
