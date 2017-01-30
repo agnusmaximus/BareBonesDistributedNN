@@ -42,7 +42,6 @@ class WorkerNN : public NN {
 	while (true) {
 	    AsynchronousFetchStepUpdate();
 	    UpdateStep();
-	    //CancelLayerRequests();
 	    AsynchronousFetchWeights();
 	    FillNextBatch(data, labels, n_examples);
 	    //std::cout << "Worker " << rank << " on iteration " << cur_step << std::endl;
@@ -51,7 +50,9 @@ class WorkerNN : public NN {
 	    for (int i = 0; i < layers.size(); i++) {
 
 		// Handle short circuiting.
-		if (shortcircuit && StepChanged()) continue;
+		if (shortcircuit && StepChanged()) {
+		    continue;
+		}
 
 		// Wait for the synced weight layer to be fetched
 		if (i != layers.size()-1) {
@@ -67,7 +68,9 @@ class WorkerNN : public NN {
 	    for (int i = layers.size()-1; i >= 0; i--) {
 
 		// Short circuit
-		if (shortcircuit && StepChanged()) continue;
+		if (shortcircuit && StepChanged()) {
+		    continue;
+		}
 
 		// Check that the previous gradient has been sent
 		if (i != layers.size()-1) {

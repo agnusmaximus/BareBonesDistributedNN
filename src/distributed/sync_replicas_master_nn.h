@@ -35,6 +35,8 @@ class SyncReplicasMasterNN : public NN {
 
 	AsynchronousFetchGradientsStart();
 
+	double time_start = GetTimeMillis();
+
 	while (true) {
 	    AsynchronousBroadcastStep();
 	    AsynchronousBroadcastLayerWeights();
@@ -82,7 +84,12 @@ class SyncReplicasMasterNN : public NN {
 	    std::fill(gradients_accumulated.begin(),
 		      gradients_accumulated.end(), 0);
 
-	    std::cout << "STEP: " << cur_step << " ERROR: " << ComputeErrorRate(data, labels, examples) << std::endl;
+	    if (cur_step % 50 == 0) {
+		double err_rate = ComputeErrorRate(data, labels, examples);
+		double loss = ComputeLoss(data, labels, examples);
+		double time = GetTimeMillis() - time_start;
+		std::cout << time << " - STEP: " << cur_step << " ERROR: " << err_rate << " LOSS: " << loss << std::endl;
+	    }
 
 	    cur_step++;
 	}
