@@ -1,6 +1,7 @@
 #ifndef _MNIST_
 #define _MNIST_
 
+#include <stdexcept>
 #include <iostream>
 #include <cstring>
 #include <cassert>
