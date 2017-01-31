@@ -9,6 +9,7 @@
 #include <random>
 #include "../mnist/mnist.h"
 #include "../util/util.h"
+#include "../distributed/distributed_defines.h"
 
 class NNLayer;
 
@@ -139,6 +140,105 @@ class NNLayer {
 
 	}
     }
+
+
+    void ForwardPropagateCoreWithShortcircuit(double *data, int *old_step, int *new_step) {
+
+	// Be sure to memset next->S as gemm += rather than =.
+	if (next) {
+	    memset(next->S, 0, sizeof(double) * batchsize * n_cols);
+	}
+
+	if (is_input) {
+
+	    // Compute S = Input * W
+	    for (int i = 0; i < batchsize; i++) {
+		for (int j = 0; j < n_rows; j++) {
+		    input[i*(n_rows+1)+j] = data[i*n_rows+j];
+		}
+	    }
+
+	    // Shortcircuit
+	    if (*old_step != *new_step) return;
+
+	    MatrixMultiply(input, weights, next->S,
+			   batchsize, n_cols, n_rows+1,
+			   n_rows+1, n_cols, n_cols);
+	}
+	else {
+
+	    if (is_output) {
+
+		for (int b = 0; b < batchsize; b++) {
+		    Softmax(&S[b*n_rows], &output[b*n_rows], n_rows);
+		}
+		for (int b = 0; b < batchsize; b++) {
+		    for (int r = 0; r < n_rows; r++) {
+			Z[b*(n_rows+1)+r] = output[b*n_rows+r];
+		    }
+		}
+		return;
+	    }
+
+	    // Compute Z_i = f(S_i)
+	    SigmoidActivation(S, Z, batchsize, n_rows, n_rows, n_rows+1);
+
+	    // Compute F_i = f'_i(S_i)^T
+	    SigmoidActivationGradient(S, F, batchsize, n_rows, n_rows, n_rows);
+
+	    // Shortcircuit
+	    if (*old_step != *new_step) return;
+
+	    // Compute S_j = Z_i W_i
+	    MatrixMultiply(Z, weights, next->S,
+			   batchsize, n_cols, n_rows+1,
+			   n_rows+1, n_cols, n_cols);
+
+	}
+    }
+
+    void BackPropagateCoreWithShortcircuit(double *labels, int *old_step, int *new_step) {
+	memset(D, 0, sizeof(double) * n_rows * batchsize);
+
+	if (is_output) {
+
+	    // Here we actually have D'
+	    MatrixAdd(Z, labels, D, 1, -1,
+		      batchsize, n_rows,
+		      n_rows+1, n_rows, n_rows);
+	}
+	else {
+
+	    // Compute D' * W'
+	    MatrixMultiplyTransB(next->D, weights, D,
+				 batchsize, n_rows, n_cols,
+				 n_cols, n_cols, n_rows);
+
+	    // Shortcircuit
+	    if (*old_step != *new_step) return;
+
+	    // Compute D'
+	    MultiplyEntrywise(D, F, D,
+			      batchsize, n_rows,
+			      n_rows, n_rows, n_rows);
+
+	    // Shortcircuit
+	    if (*old_step != *new_step) return;
+
+	    memset(grad, 0, sizeof(double) * (n_rows+1) * n_cols);
+	    if (is_input) {
+		MatrixMultiplyTransA(input, next->D, grad,
+				     n_rows+1, n_cols, batchsize,
+				     n_rows+1, n_cols, n_cols);
+	    }
+	    else {
+		MatrixMultiplyTransA(Z, next->D, grad,
+				     n_rows+1, n_cols, batchsize,
+				     n_rows+1, n_cols, n_cols);
+	    }
+	}
+    }
+
 
     void BackPropagateCore(double *labels) {
 	memset(D, 0, sizeof(double) * n_rows * batchsize);

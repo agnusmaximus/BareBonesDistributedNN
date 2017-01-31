@@ -61,7 +61,11 @@ class WorkerNN : public NN {
 		}
 
 		// Do forward propagation
+#if SHORTCIRCUIT
+		layers[i]->ForwardPropagateCoreWithShortcircuit(batch_data_placeholder, &cur_step, &next_step);
+#else
 		layers[i]->ForwardPropagateCore(batch_data_placeholder);
+#endif
 	    }
 
 	    // Back propagate
@@ -79,7 +83,11 @@ class WorkerNN : public NN {
 		}
 
 		// Backpropagate core.
+#if SHORTCIRCUIT
+		layers[i]->BackPropagateCoreWithShortcircuit(batch_labels_placeholder, &cur_step, &next_step);
+#else
 		layers[i]->BackPropagateCore(batch_labels_placeholder);
+#endif
 
 		// Send the layer's gradient.
 		if (i != layers.size()-1) {
