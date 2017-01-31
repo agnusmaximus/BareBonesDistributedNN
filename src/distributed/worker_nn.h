@@ -12,9 +12,8 @@ typedef struct LayerSendRequest LayerSendRequest;
 
 class WorkerNN : public NN {
  public:
-   WorkerNN(NNParams *params, std::vector<MPI_Comm> &layer_comms, int rank, int n_procs, bool shortcircuit) : NN(params), layer_comms(layer_comms) {
+   WorkerNN(NNParams *params, std::vector<MPI_Comm> &layer_comms, int rank, int n_procs) : NN(params), layer_comms(layer_comms) {
 	this->rank = rank;
-	this->shortcircuit = shortcircuit;
 	this->n_procs = n_procs;
 	this->cur_step = STEP_UNINITIALIZED;
 	this->comm = MPI_COMM_WORLD;
@@ -51,9 +50,9 @@ class WorkerNN : public NN {
 	    for (int i = 0; i < layers.size(); i++) {
 
 		// Handle short circuiting.
-		if (shortcircuit && StepChanged()) {
-		    continue;
-		}
+#if SHORTCIRCUIT
+		if (StepChanged()) continue;
+#endif
 
 		// Wait for the synced weight layer to be fetched
 		if (i != layers.size()-1) {
@@ -68,10 +67,9 @@ class WorkerNN : public NN {
 	    // Back propagate
 	    for (int i = layers.size()-1; i >= 0; i--) {
 
-		// Short circuit
-		if (shortcircuit && StepChanged()) {
-		    continue;
-		}
+#if SHORTCIRCUIT
+		if (StepChanged()) continue;
+#endif
 
 		// Check that the previous gradient has been sent
 		if (i != layers.size()-1) {
@@ -103,7 +101,6 @@ class WorkerNN : public NN {
 
     // The synchronized step (should be the same across workers & master)
     int cur_step, rank, n_procs, next_step;
-    bool shortcircuit;
     MPI_Comm comm;
 
     // layer_cur_step[i] is the iteration step for the current weights

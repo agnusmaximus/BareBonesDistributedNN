@@ -62,7 +62,7 @@ int main(void) {
 	delete master;
     }
     else {
-	WorkerNN *worker = new WorkerNN(params, layer_comms, rank, n_procs, true);
+	WorkerNN *worker = new WorkerNN(params, layer_comms, rank, n_procs);
 	worker->Train(test_images, test_labels, number_of_test_images);
 	delete worker;
     }
