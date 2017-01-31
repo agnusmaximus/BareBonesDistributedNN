@@ -51,7 +51,9 @@ class WorkerNN : public NN {
 
 		// Handle short circuiting.
 #if SHORTCIRCUIT
-		if (StepChanged()) continue;
+		if (StepChanged()) {
+		    break;
+	        }
 #endif
 
 		// Wait for the synced weight layer to be fetched
@@ -72,7 +74,9 @@ class WorkerNN : public NN {
 	    for (int i = layers.size()-1; i >= 0; i--) {
 
 #if SHORTCIRCUIT
-		if (StepChanged()) continue;
+		if (StepChanged()) {
+		    break;
+		}
 #endif
 
 		// Check that the previous gradient has been sent

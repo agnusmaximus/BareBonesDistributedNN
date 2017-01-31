@@ -25,8 +25,15 @@ class SyncReplicasMasterNN : public NN {
 	    }
 	}
 
-	timeline_out.open("timeline_out");
-	timeline_out << "SyncReplicasWithBackup_" << n_to_collect << "_" << n_procs << std::endl;
+	string name = "SyncReplicasWithBackup_" + std::to_string(n_to_collect) + "_"  + std::to_string(n_procs);
+	if (SHORTCIRCUIT) {
+	    name += "_shortcircuit";
+	}
+	else {
+	    name += "_no_shortcircuit";
+	}
+	timeline_out.open("timeline_out_" + name);
+	timeline_out << name << std::endl;
     }
 
     ~SyncReplicasMasterNN() {
