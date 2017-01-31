@@ -21,6 +21,6 @@
 #define N_RECV_REQUESTS_PER_LAYER 100
 #define SHORTCIRCUIT true
 #define GENERATE_TIMELINE false
-#define N_TRAIN_ITERS 5
+#define N_TRAIN_ITERS 500
 
 #endif

@@ -32,12 +32,15 @@ class SyncReplicasMasterNN : public NN {
 	else {
 	    name += "_no_shortcircuit";
 	}
-	timeline_out.open("timeline_out_" + name);
+	timeline_out.open("outfiles/timeline_out_" + name);
 	timeline_out << name << std::endl;
+	time_loss_out.open("outfiles/time_loss_out_" + name);
+	time_loss_out << name << std::endl;
     }
 
     ~SyncReplicasMasterNN() {
 	timeline_out.close();
+	time_loss_out.close();
     }
 
     void Train(uchar **data, uchar *labels, int examples) override {
@@ -85,17 +88,15 @@ class SyncReplicasMasterNN : public NN {
 		    MPI_Get_count(&stat, MPI_DOUBLE, &count);
 		    assert(count == layers[layer_received]->GetLayerCount());
 
-		    if (gradients_accumulated[layer_received] < n_to_collect) {
-			gradients_accumulated[layer_received]++;
+		    gradients_accumulated[layer_received]++;
 
-			// Apply gradient
-			layers[layer_received]->ApplyGrad(learning_rate, grad_buffers[layer_received][copy_index]);
-			memset(grad_buffers[layer_received][copy_index], 0, sizeof(double) * layers[layer_received]->GetLayerCount());
+		    // Apply gradient
+		    layers[layer_received]->ApplyGrad(learning_rate, grad_buffers[layer_received][copy_index]);
+		    memset(grad_buffers[layer_received][copy_index], 0, sizeof(double) * layers[layer_received]->GetLayerCount());
 
-			enough_gradients_received = true;
-			for (int i = 0; i < layers.size()-1; i++) {
-			    enough_gradients_received = enough_gradients_received && gradients_accumulated[i] >= n_to_collect;
-			}
+		    enough_gradients_received = true;
+		    for (int i = 0; i < layers.size()-1; i++) {
+			enough_gradients_received = enough_gradients_received && gradients_accumulated[i] >= n_to_collect;
 		    }
 
 		    //std::cout << "Gradients accumulated: ";
@@ -114,12 +115,10 @@ class SyncReplicasMasterNN : public NN {
 	    std::fill(gradients_accumulated.begin(),
 		      gradients_accumulated.end(), 0);
 
-	    if (cur_step % 1 == 0) {
-		//double err_rate = ComputeErrorRate(data, labels, examples);
-		//double loss = ComputeLoss(data, labels, examples);
+	    if (cur_step % 20 == 0) {
+		double loss = ComputeLoss(data, labels, examples);
 		double time = GetTimeMillis() - start_training_time;
-		double err_rate = 0, loss = 0;
-		std::cout << time << " - STEP: " << cur_step << " ERROR: " << err_rate << " LOSS: " << loss << std::endl;
+		time_loss_out << time << " " << loss << std::endl;
 	    }
 
 	    cur_step++;
@@ -133,6 +132,7 @@ class SyncReplicasMasterNN : public NN {
     int n_procs, cur_step, n_to_collect;
     double start_training_time;
     ofstream timeline_out;
+    ofstream time_loss_out;
     MPI_Comm comm;
     std::vector<std::vector<MPI_Request> > layer_send_requests;
     std::vector<MPI_Request> gradient_fetch_requests;
