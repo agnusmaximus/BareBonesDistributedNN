@@ -20,4 +20,5 @@
 #define MASTER_RANK 0
 #define N_RECV_REQUESTS_PER_LAYER 100
 #define SHORTCIRCUIT false
+#define GENERATE_TIMELINE true
 #endif

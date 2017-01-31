@@ -24,6 +24,13 @@ class SyncReplicasMasterNN : public NN {
 		grad_buffers[i].push_back((double *)malloc(sizeof(double) * layers[i]->GetLayerCount()));
 	    }
 	}
+
+	timeline_out.open("timeline_out");
+	timeline_out << "SyncReplicasWithBackup_" << n_to_collect << "_" << n_procs << std::endl;
+    }
+
+    ~SyncReplicasMasterNN() {
+	timeline_out.close();
     }
 
     void Train(uchar **data, uchar *labels, int examples) override {
@@ -35,11 +42,15 @@ class SyncReplicasMasterNN : public NN {
 
 	AsynchronousFetchGradientsStart();
 
-	double time_start = GetTimeMillis();
+	start_training_time = GetTimeMillis();
 
 	while (true) {
 	    AsynchronousBroadcastStep();
 	    AsynchronousBroadcastLayerWeights();
+
+#if GENERATE_TIMELINE
+	    LogReceptionEvent(cur_step, 1);
+#endif
 
 	    bool enough_gradients_received = false;
 	    while (!enough_gradients_received) {
@@ -56,6 +67,10 @@ class SyncReplicasMasterNN : public NN {
 		// index / N_RECV_REQUESTS_PER_LAYER
 		int layer_received = index_received / N_RECV_REQUESTS_PER_LAYER;
 		int copy_index = index_received - layer_received * N_RECV_REQUESTS_PER_LAYER;
+
+#if GENERATE_TIMELINE
+		LogReceptionEvent(stat.MPI_TAG, 0);
+#endif
 
 		if (stat.MPI_TAG == cur_step) {
 
@@ -95,7 +110,7 @@ class SyncReplicasMasterNN : public NN {
 	    if (cur_step % 1 == 0) {
 		//double err_rate = ComputeErrorRate(data, labels, examples);
 		//double loss = ComputeLoss(data, labels, examples);
-		double time = GetTimeMillis() - time_start;
+		double time = GetTimeMillis() - start_training_time;
 		double err_rate = 0, loss = 0;
 		std::cout << time << " - STEP: " << cur_step << " ERROR: " << err_rate << " LOSS: " << loss << std::endl;
 	    }
@@ -107,6 +122,8 @@ class SyncReplicasMasterNN : public NN {
  protected:
     MPI_Request step_broadcast_req;
     int n_procs, cur_step, n_to_collect;
+    double start_training_time;
+    ofstream timeline_out;
     MPI_Comm comm;
     std::vector<std::vector<MPI_Request> > layer_send_requests;
     std::vector<MPI_Request> gradient_fetch_requests;
@@ -144,6 +161,11 @@ class SyncReplicasMasterNN : public NN {
 		AsynchronousFetchGradient(l, k, &gradient_fetch_requests[l*N_RECV_REQUESTS_PER_LAYER+k]);
 	    }
 	}
+    }
+
+    void LogReceptionEvent(int step, int is_master) {
+	double time = GetTimeMillis() - start_training_time;
+	timeline_out << time << " " << step << " " << is_master << std::endl;
     }
 
     void AsynchronousBroadcastLayerWeights() {
