@@ -76,11 +76,11 @@ class SyncReplicasMasterNN : public NN {
 			}
 		    }
 
-		    std::cout << "Gradients accumulated: ";
-		    for (int i = 0; i < layers.size(); i++) {
-			std::cout << gradients_accumulated[i] << " ";
-		    }
-		    std::cout << endl;
+		    //std::cout << "Gradients accumulated: ";
+		    //for (int i = 0; i < layers.size(); i++) {
+			//std::cout << gradients_accumulated[i] << " ";
+		    //}
+		    //std::cout << endl;
 
 		}
 
@@ -92,10 +92,11 @@ class SyncReplicasMasterNN : public NN {
 	    std::fill(gradients_accumulated.begin(),
 		      gradients_accumulated.end(), 0);
 
-	    if (cur_step % 20 == 0) {
-		double err_rate = ComputeErrorRate(data, labels, examples);
-		double loss = ComputeLoss(data, labels, examples);
+	    if (cur_step % 1 == 0) {
+		//double err_rate = ComputeErrorRate(data, labels, examples);
+		//double loss = ComputeLoss(data, labels, examples);
 		double time = GetTimeMillis() - time_start;
+		double err_rate = 0, loss = 0;
 		std::cout << time << " - STEP: " << cur_step << " ERROR: " << err_rate << " LOSS: " << loss << std::endl;
 	    }
 
