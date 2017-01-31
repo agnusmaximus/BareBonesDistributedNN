@@ -44,7 +44,8 @@ class WorkerNN : public NN {
 	    UpdateStep();
 	    AsynchronousFetchWeights();
 	    FillNextBatch(data, labels, n_examples);
-	    //std::cout << "Worker " << rank << " on iteration " << cur_step << std::endl;
+
+	    if (cur_step >= N_TRAIN_ITERS) break;
 
 	    // Forward propagate
 	    for (int i = 0; i < layers.size(); i++) {

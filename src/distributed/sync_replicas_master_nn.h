@@ -51,7 +51,7 @@ class SyncReplicasMasterNN : public NN {
 
 	start_training_time = GetTimeMillis();
 
-	while (true) {
+	while (cur_step < N_TRAIN_ITERS) {
 	    AsynchronousBroadcastStep();
 	    AsynchronousBroadcastLayerWeights();
 
@@ -124,6 +124,8 @@ class SyncReplicasMasterNN : public NN {
 
 	    cur_step++;
 	}
+
+	AsynchronousBroadcastStep();
     }
 
  protected:
