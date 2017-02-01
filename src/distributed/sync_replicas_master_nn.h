@@ -25,6 +25,11 @@ class SyncReplicasMasterNN : public NN {
 	    }
 	}
 
+	// Set gradients to 0
+	for (int i = 0; i < layers.size()-1; i++) {
+	    memset(layers[i]->GetGradient(), 0, sizeof(double) * layers[i]->GetLayerCount());
+	}
+
 	name = scheme_full_name("SyncReplicasWithBackup", n_to_collect, n_procs);
 
 	// -2 for evaluator and master.
@@ -85,8 +90,16 @@ class SyncReplicasMasterNN : public NN {
 
 		    gradients_accumulated[layer_received]++;
 
-		    // Apply gradient
-		    layers[layer_received]->ApplyGrad(learning_rate, grad_buffers[layer_received][copy_index]);
+		    // Sum gradient
+		    //layers[layer_received]->ApplyGrad(learning_rate, grad_buffers[layer_received][copy_index]);
+		    MatrixAdd(grad_buffers[layer_received][copy_index], layers[layer_received]->GetGradient(), layers[layer_received]->GetGradient(),
+			      1, 1,
+			      layers[layer_received]->NRows(),
+			      layers[layer_received]->NCols(),
+			      layers[layer_received]->NCols(),
+			      layers[layer_received]->NCols(),
+			      layers[layer_received]->NCols());
+
 		    memset(grad_buffers[layer_received][copy_index], 0, sizeof(double) * layers[layer_received]->GetLayerCount());
 
 		    enough_gradients_received = true;
@@ -107,8 +120,20 @@ class SyncReplicasMasterNN : public NN {
 		AsynchronousFetchGradient(layer_received, copy_index, &gradient_fetch_requests[index_received]);
 	    }
 
+	    // Apply average gradient
+	    for (int layer = 0; layer < layers.size()-1; layer++) {
+		layers[layer]->ApplyGrad(learning_rate / gradients_accumulated[layer],
+					 layers[layer]->GetGradient());
+		memset(layers[layer]->GetGradient(), 0, sizeof(double) * layers[layer]->GetLayerCount());
+	    }
+
 	    std::fill(gradients_accumulated.begin(),
 		      gradients_accumulated.end(), 0);
+
+	    double loss = ComputeLoss(data, labels, examples);
+	    std::cout << cur_step << " " << loss << std::endl;
+	    //std::cout << cur_step << " " << time << " " << loss << " " << err_rate << std::endl;
+
 
 	    cur_step++;
 	}

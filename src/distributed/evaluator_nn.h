@@ -39,6 +39,8 @@ class EvaluatorNN : public NN {
 	    bool changed = UpdateStep();
 	    AsynchronousFetchWeights();
 
+	    if (cur_step >= N_TRAIN_ITERS) break;
+
 	    if (changed) {
 
 		// Wait for the synced weight layer to be fetched
@@ -54,8 +56,6 @@ class EvaluatorNN : public NN {
 		double err_rate = ComputeErrorRate(data, labels, n_examples);
 		double time = GetTimeMillis() - start_training_time;
 		time_loss_out << cur_step << " " << time << " " << loss << " " << err_rate << std::endl;
-
-		if (cur_step >= N_TRAIN_ITERS) break;
 	    }
 	}
     }

@@ -22,10 +22,10 @@
 #define EVALUATOR_RANK 1
 #define N_RECV_REQUESTS_PER_LAYER 100
 #ifndef SHORTCIRCUIT
-#define SHORTCIRCUIT true
+#define SHORTCIRCUIT false
 #endif
 #define GENERATE_TIMELINE false
-#define N_TRAIN_ITERS 100
+#define N_TRAIN_ITERS 10
 
 string scheme_full_name(string scheme_name, int n_to_collect, int n_procs) {
 

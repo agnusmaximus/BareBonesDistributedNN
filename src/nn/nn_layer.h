@@ -297,6 +297,14 @@ class NNLayer {
 	return n_rows;
     }
 
+    int NCols() {
+	return n_cols;
+    }
+
+    int NRows() {
+	return n_rows+1;
+    }
+
     double *Output() {
 	assert(is_output);
 	return output;
