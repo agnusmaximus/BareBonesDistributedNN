@@ -4,6 +4,7 @@
 #include "distributed/distributed_defines.h"
 #include "distributed/worker_nn.h"
 #include "distributed/sync_replicas_master_nn.h"
+#include "distributed/evaluator_nn.h"
 
 int main(void) {
     std::cout << std::fixed << std::showpoint;
@@ -30,15 +31,16 @@ int main(void) {
 
     // Set NN Params
     NNParams *params = new NNParams();
-    int batch_size = 10000;
+    int batch_size = 128;
     params->SetBatchsize(batch_size);
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
-    params->AddLayer(IMAGE_X*IMAGE_Y, 500);
-    params->AddLayer(500, 800);
-    params->AddLayer(800, 200);
-    params->AddLayer(200, 100);
+    params->AddLayer(IMAGE_X*IMAGE_Y, 100);
+    //params->AddLayer(IMAGE_X*IMAGE_Y, 500);
+    //params->AddLayer(500, 800);
+    //params->AddLayer(800, 200);
+    //params->AddLayer(200, 100);
     params->AddLayer(100, N_CLASSES);
-    params->SetLearningRate(1e-3);
+    params->SetLearningRate(.01);
 
     // Load data
     int number_of_images, number_of_test_images, image_size;
@@ -60,6 +62,11 @@ int main(void) {
 	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-5);
 	master->Train(test_images, test_labels, number_of_test_images);
 	delete master;
+    }
+    else if (rank == EVALUATOR_RANK) {
+	EvaluatorNN *evaluator = new EvaluatorNN(params, layer_comms, rank, n_procs);
+	evaluator->Train(test_images, test_labels, number_of_test_images);
+	delete evaluator;
     }
     else {
 	WorkerNN *worker = new WorkerNN(params, layer_comms, rank, n_procs);

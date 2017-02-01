@@ -15,11 +15,12 @@ def extract_time_losses(fname):
         if i == 0:
             name = line
         else:
-            time, loss = [float(x) for x in line.split(" ")]
+            step, time, loss, err = [float(x) for x in line.split(" ")]
             times.append(time)
             losses.append(loss)
     f.close()
     return name, times, losses
+
 def plot_time_loss(fname):
     name, times, losses = extract_time_losses(fname)
     plt.plot(times, losses, label=name)

@@ -20,6 +20,7 @@ class WorkerNN : public NN {
 	this->next_step = STEP_UNINITIALIZED;
 	this->step_fetch_request = MPI_REQUEST_NULL;
 
+
 	for (int i = 0; i < layers.size(); i++) {
 	    layer_cur_step.push_back(STEP_UNINITIALIZED);
 	    layer_fetch_requests.push_back(MPI_REQUEST_NULL);

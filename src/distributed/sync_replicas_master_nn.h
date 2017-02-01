@@ -25,22 +25,17 @@ class SyncReplicasMasterNN : public NN {
 	    }
 	}
 
-	string name = "SyncReplicasWithBackup_" + std::to_string(n_to_collect) + "_"  + std::to_string(n_procs);
-	if (SHORTCIRCUIT) {
-	    name += "_shortcircuit";
-	}
-	else {
-	    name += "_no_shortcircuit";
-	}
+	name = scheme_full_name("SyncReplicasWithBackup", n_to_collect, n_procs);
+
+	// -2 for evaluator and master.
 	timeline_out.open("outfiles/timeline_out_" + name);
 	timeline_out << name << std::endl;
-	time_loss_out.open("outfiles/time_loss_out_" + name);
-	time_loss_out << name << std::endl;
+
+	SendEvaluatorSchemeName();
     }
 
     ~SyncReplicasMasterNN() {
 	timeline_out.close();
-	time_loss_out.close();
     }
 
     void Train(uchar **data, uchar *labels, int examples) override {
@@ -115,12 +110,6 @@ class SyncReplicasMasterNN : public NN {
 	    std::fill(gradients_accumulated.begin(),
 		      gradients_accumulated.end(), 0);
 
-	    if (cur_step % 20 == 0) {
-		double loss = ComputeLoss(data, labels, examples);
-		double time = GetTimeMillis() - start_training_time;
-		time_loss_out << time << " " << loss << std::endl;
-	    }
-
 	    cur_step++;
 	}
 
@@ -131,13 +120,17 @@ class SyncReplicasMasterNN : public NN {
     MPI_Request step_broadcast_req;
     int n_procs, cur_step, n_to_collect;
     double start_training_time;
+    string name;
     ofstream timeline_out;
-    ofstream time_loss_out;
     MPI_Comm comm;
     std::vector<std::vector<MPI_Request> > layer_send_requests;
     std::vector<MPI_Request> gradient_fetch_requests;
     std::vector<MPI_Comm> &layer_comms;
     std::vector<std::vector<double *> > grad_buffers;
+
+    void SendEvaluatorSchemeName() {
+	MPI_Send(name.c_str(), name.length()+1, MPI_CHAR, EVALUATOR_RANK, 0, comm);
+    }
 
     void AsynchronousBroadcastStep() {
 	for (int i = 0; i < n_procs; i++) {
