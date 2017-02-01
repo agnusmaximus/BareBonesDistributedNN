@@ -130,11 +130,6 @@ class SyncReplicasMasterNN : public NN {
 	    std::fill(gradients_accumulated.begin(),
 		      gradients_accumulated.end(), 0);
 
-	    double loss = ComputeLoss(data, labels, examples);
-	    std::cout << cur_step << " " << loss << std::endl;
-	    //std::cout << cur_step << " " << time << " " << loss << " " << err_rate << std::endl;
-
-
 	    cur_step++;
 	}
 
