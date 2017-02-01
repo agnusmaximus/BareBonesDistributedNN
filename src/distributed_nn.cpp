@@ -39,7 +39,7 @@ int main(void) {
     params->AddLayer(800, 200);
     params->AddLayer(200, 100);
     params->AddLayer(100, N_CLASSES);
-    params->SetLearningRate(1e-4);
+    params->SetLearningRate(1e-6);
 
     // Load data
     int number_of_images, number_of_test_images, image_size;
@@ -58,7 +58,7 @@ int main(void) {
     std::cout << "Machine launched: " << hostname << std::endl;
 
     if (rank == MASTER_RANK) {
-	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-5);
+	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-2-5);
 	master->Train(test_images, test_labels, number_of_test_images);
 	delete master;
     }
