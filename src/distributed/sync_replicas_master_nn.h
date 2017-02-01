@@ -129,7 +129,7 @@ class SyncReplicasMasterNN : public NN {
     std::vector<std::vector<double *> > grad_buffers;
 
     void SendEvaluatorSchemeName() {
-	MPI_Send(name.c_str(), name.length()+1, MPI_CHAR, EVALUATOR_RANK, 0, comm);
+	MPI_Send((void *)name.c_str(), name.length()+1, MPI_CHAR, EVALUATOR_RANK, 0, comm);
     }
 
     void AsynchronousBroadcastStep() {

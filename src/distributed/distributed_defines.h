@@ -22,7 +22,7 @@
 #define EVALUATOR_RANK 1
 #define N_RECV_REQUESTS_PER_LAYER 100
 #ifndef SHORTCIRCUIT
-#define SHORTCIRCUIT false
+#define SHORTCIRCUIT true
 #endif
 #define GENERATE_TIMELINE false
 #define N_TRAIN_ITERS 500

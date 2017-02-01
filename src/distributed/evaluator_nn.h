@@ -31,31 +31,32 @@ class EvaluatorNN : public NN {
 	time_loss_out << name << std::endl;
 
 	SynchronousFetchStep();
-	assert(UpdateStep());
-	assert(cur_step == STEP_START);
 
 	double start_training_time = GetTimeMillis();
 
 	while (true) {
 	    AsynchronousFetchStepUpdate();
-	    UpdateStep();
+	    bool changed = UpdateStep();
 	    AsynchronousFetchWeights();
 
-	    // Wait for the synced weight layer to be fetched
-	    for (int i = 0; i < layers.size(); i++) {
-		if (i != layers.size()-1) {
-		    MPI_Wait(&layer_fetch_requests[i], MPI_STATUS_IGNORE);
-		    layer_cur_step[i] = cur_step;
+	    if (changed) {
+
+		// Wait for the synced weight layer to be fetched
+		for (int i = 0; i < layers.size(); i++) {
+		    if (i != layers.size()-1) {
+			MPI_Wait(&layer_fetch_requests[i], MPI_STATUS_IGNORE);
+			layer_cur_step[i] = cur_step;
+		    }
 		}
+
+		// Evaluate on these weights
+		double loss = ComputeLoss(data, labels, n_examples);
+		double err_rate = ComputeErrorRate(data, labels, n_examples);
+		double time = GetTimeMillis() - start_training_time;
+		time_loss_out << cur_step << " " << time << " " << loss << " " << err_rate << std::endl;
+
+		if (cur_step >= N_TRAIN_ITERS) break;
 	    }
-
-	    // Evaluate on these weights
-	    double loss = ComputeLoss(data, labels, n_examples);
-	    double err_rate = ComputeErrorRate(data, labels, n_examples);
-	    double time = GetTimeMillis() - start_training_time;
-	    time_loss_out << cur_step << " " << time << " " << loss << " " << err_rate << std::endl;
-
-	    if (cur_step >= N_TRAIN_ITERS) break;
 	}
     }
 
