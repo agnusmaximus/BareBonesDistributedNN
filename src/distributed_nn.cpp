@@ -30,7 +30,7 @@ int main(void) {
 
     // Set NN Params
     NNParams *params = new NNParams();
-    int batch_size = 128;
+    int batch_size = 10000;
     params->SetBatchsize(batch_size);
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
     params->AddLayer(IMAGE_X*IMAGE_Y, 500);
