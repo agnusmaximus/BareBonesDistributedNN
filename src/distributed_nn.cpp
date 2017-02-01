@@ -39,7 +39,7 @@ int main(void) {
     params->AddLayer(800, 200);
     params->AddLayer(200, 100);
     params->AddLayer(100, N_CLASSES);
-    params->SetLearningRate(1e-6);
+    params->SetLearningRate(1e-7);
 
     // Load data
     int number_of_images, number_of_test_images, image_size;

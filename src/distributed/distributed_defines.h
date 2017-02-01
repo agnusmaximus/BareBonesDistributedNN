@@ -25,7 +25,7 @@
 #define SHORTCIRCUIT true
 #endif
 #define GENERATE_TIMELINE false
-#define N_TRAIN_ITERS 500
+#define N_TRAIN_ITERS 100
 
 string scheme_full_name(string scheme_name, int n_to_collect, int n_procs) {
 
