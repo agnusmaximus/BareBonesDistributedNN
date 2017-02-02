@@ -33,6 +33,7 @@ class WorkerNN : public NN {
 	// Boolean indicating whether it's the first pass through training.
 	// Not equivalent to step, as a worker can repeat a step.
 
+	AsynchronousFetchStepUpdate();
 	//SynchronousFetchStep();
 	//assert(UpdateStep());
 	//assert(cur_step == STEP_START);
@@ -41,9 +42,9 @@ class WorkerNN : public NN {
 
 	while (true) {
 
-	    //AsynchronousFetchStepUpdate();
-	    SynchronousFetchStep();
+	    MPI_Wait(&step_fetch_request, MPI_STATUS_IGNORE);
 	    assert(UpdateStep());
+	    AsynchronousFetchStepUpdate();
 	    AsynchronousFetchWeights();
 	    FillNextBatch(data, labels, n_examples);
 
@@ -55,7 +56,7 @@ class WorkerNN : public NN {
 		// Handle short circuiting.
 #if SHORTCIRCUIT
 		if (StepChanged()) {
-		  std::cout << "SHORTCIRCUIT" << std::endl;
+		    std::cout << "SHORTCIRCUIT" << std::endl;
 		    break;
 	        }
 #endif
