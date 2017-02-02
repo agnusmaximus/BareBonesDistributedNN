@@ -54,6 +54,7 @@ class WorkerNN : public NN {
 		// Handle short circuiting.
 #if SHORTCIRCUIT
 		if (StepChanged()) {
+		  std::cout << "SHORTCIRCUIT" << std::endl;
 		    break;
 	        }
 #endif
@@ -73,6 +74,7 @@ class WorkerNN : public NN {
 
 #if SHORTCIRCUIT
 		if (StepChanged()) {
+		  std::cout << "SHORTCIRCUIT" << std::endl;
 		    break;
 		}
 #endif
