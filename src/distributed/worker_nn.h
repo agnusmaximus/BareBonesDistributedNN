@@ -33,16 +33,17 @@ class WorkerNN : public NN {
 	// Boolean indicating whether it's the first pass through training.
 	// Not equivalent to step, as a worker can repeat a step.
 
-	SynchronousFetchStep();
-	assert(UpdateStep());
-	assert(cur_step == STEP_START);
+	//SynchronousFetchStep();
+	//assert(UpdateStep());
+	//assert(cur_step == STEP_START);
 
 	std::cout << "Worker " << rank << " starting training..." << std::endl;
 
 	while (true) {
 
-	    AsynchronousFetchStepUpdate();
-	    UpdateStep();
+	    //AsynchronousFetchStepUpdate();
+	    SynchronousFetchStep();
+	    assert(UpdateStep());
 	    AsynchronousFetchWeights();
 	    FillNextBatch(data, labels, n_examples);
 
