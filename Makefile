@@ -16,4 +16,4 @@ distributed:
 
 distributed_run:
 	make distributed
-	mpirun -n 8 ./distributed_nn
+	mpirun -np 8 ./distributed_nn

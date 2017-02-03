@@ -13,7 +13,12 @@ int main(void) {
     std::cout << std::setprecision(10);
 
     // Initialize the MPI environment
-    MPI_Init(NULL, NULL);
+    int thread_support;
+    MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, &thread_support);
+    if (thread_support != MPI_THREAD_MULTIPLE) {
+	std::cout << "MPI Multiple threads not supported" << std::endl;
+	exit(0);
+    }
 
     // Get the number of processes
     int n_procs;
@@ -40,6 +45,10 @@ int main(void) {
     params->AddLayer(500, 500);
     params->AddLayer(500, 800);
     params->AddLayer(800, 800);
+    params->AddLayer(800, 800);
+    params->AddLayer(800, 800);
+    params->AddLayer(800, 800);
+    params->AddLayer(800, 800);
     params->AddLayer(800, 200);
     params->AddLayer(200, 100);
     params->AddLayer(100, 100);
@@ -63,7 +72,7 @@ int main(void) {
     std::cout << "Machine launched: " << hostname << std::endl;
 
     if (rank == MASTER_RANK) {
-	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-2-5);
+	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-2-2);
 	master->Train(test_images, test_labels, number_of_test_images);
 	delete master;
     }
