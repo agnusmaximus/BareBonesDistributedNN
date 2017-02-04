@@ -161,7 +161,7 @@ protected:
 			  layers[r.layer]->NCols());
 	    }
 
-	    PrintNumAccumulated(gradients_accumulated);
+	    //PrintNumAccumulated(gradients_accumulated);
 
 	    // Return memory back to pool.
 	    push_thread_safe<double *>(memory_pool[r.layer], r.gradient);
