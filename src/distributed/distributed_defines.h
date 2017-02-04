@@ -50,9 +50,10 @@ sync_queue<T> * new_sync_queue() {
 
 template <typename T>
 void push_thread_safe(sync_queue<T> *q, T element) {
-    std::unique_lock<std::mutex> lock(q->mtx);
-    q->q.push(element);
-    lock.unlock();
+    {
+	std::lock_guard<std::mutex> lock(q->mtx);
+	q->q.push(element);
+    }
     q->cv.notify_all();
 }
 
@@ -76,6 +77,8 @@ struct GradientSendRequest {
     int layer;
     int step;
 };
+
+typedef struct GradientSendRequest GradientReceiveRequest;
 
 string scheme_full_name(string scheme_name, int n_to_collect, int n_procs) {
 

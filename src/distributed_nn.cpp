@@ -65,7 +65,7 @@ int main(void) {
     std::cout << "Machine launched: " << hostname << std::endl;
 
     if (rank == MASTER_RANK) {
-	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-2-2);
+	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-2);
 	master->Train(test_images, test_labels, number_of_test_images);
 	delete master;
     }
@@ -80,9 +80,9 @@ int main(void) {
 	delete worker;
     }
 
-    delete params;
-
     MPI_Barrier(MPI_COMM_WORLD);
+
+    delete params;
 
     // Finalize the MPI environment.
     MPI_Finalize();

@@ -12,7 +12,12 @@ public:
 	for (int i = 0; i < layers.size()-1; i++) {
 	    memory_pool.push_back(new_sync_queue<double *>());
 	    for (int j = 0; j < POOL_SIZE; j++) {
-		push_thread_safe(memory_pool[i], (double *)malloc(sizeof(double) * layers[i]->GetLayerCount()));
+		double *new_memory = (double *)malloc(sizeof(double) * layers[i]->GetLayerCount());
+		if (!new_memory) {
+		    std::cout << "Out of memory." << std::endl;
+		    exit(0);
+		}
+		push_thread_safe(memory_pool[i], new_memory);
 	    }
 	}
 
@@ -73,7 +78,6 @@ public:
 	    if (LocalStepDifferentFromMasterStep()) {
 		UpdateLocalStep();
 		FillNextBatch(data, labels, n_examples);
-		std::cout << "WORKER " << rank << " ON " << local_step << std::endl;
 
 		// Forward propagation
 		for (int i = 0; i < layers.size(); i++) {
@@ -103,6 +107,7 @@ public:
 		    }
 		}
 	    }
+	    sleep(0);
 	}
     }
 
@@ -113,7 +118,8 @@ protected:
     std::vector<std::vector<sync_queue<double *> *> > layer_weights_recved;
     sync_queue<GradientSendRequest> *gradients_to_send;
     std::thread local_step_update_thread, send_gradients_thread, weights_update_thread;
-    int local_step, master_step, rank;
+    volatile int local_step, master_step;
+    int rank;
 
     void UpdateLocalStep() {
 	local_step = master_step;
@@ -141,7 +147,7 @@ protected:
 	    MPI_Status stat;
 	    MPI_Waitany(layers.size()-1, requests.data(), &layer_received, &stat);
 	    double *mem = memory[layer_received];
-	    std::cout << "Worker " << rank << " received layer " << layer_received << " for step " << stat.MPI_TAG << std::endl;
+	    //std::cout << "Worker " << rank << " received layer " << layer_received << " for step " << stat.MPI_TAG << std::endl;
 
 	    // Add the received memory to the queue of received layer weights
 	    push_thread_safe(layer_weights_recved[layer_received][stat.MPI_TAG], mem);
@@ -159,7 +165,7 @@ protected:
 
     void UpdateLocalStepAsync() {
 	while (1) {
-	    MPI_Recv(&master_step, 1, MPI_INT, MASTER_RANK, STEP_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	    MPI_Recv((int *)&master_step, 1, MPI_INT, MASTER_RANK, STEP_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
     }
 
@@ -167,7 +173,7 @@ protected:
 	while (1) {
 	    // Dequeue send requests
 	    GradientSendRequest r = pop_thread_safe<GradientSendRequest>(gradients_to_send);
-	    std::cout << "Worker " << rank << " Sending gradient... " << r.layer << " " << r.step << std::endl;
+	    //std::cout << "Worker " << rank << " Sending gradient for layer " << r.layer << " on step " << r.step << std::endl;
 
 	    // Send
 	    MPI_Send(r.gradient, layers[r.layer]->GetLayerCount(), MPI_DOUBLE,
