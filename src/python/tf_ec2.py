@@ -29,24 +29,24 @@ cfg = Cfg({
 
     # Cluster topology
     "n_masters" : 1,                      # Should always be 1
-    "n_workers" : 40,
+    "n_workers" : 20,
     "n_ps" : 1,
     "n_evaluators" : 1,                   # Continually validates the model on the validation data
     "num_replicas_to_aggregate" : "4",
 
-     "method" : "spot",
+     "method" : "reserved",
 
     # Region speficiation
     "region" : "us-west-2",
     "availability_zone" : "us-west-2b",
 
     # Machine type - instance type configuration.
-    "master_type" : "m3.medium",
-    "worker_type" : "m3.medium",
-    "ps_type" : "m3.medium",
-    "evaluator_type" : "m3.medium",
+    "master_type" : "t2.small",
+    "worker_type" : "t2.small",
+    "ps_type" : "t2.small",
+    "evaluator_type" : "t2.small",
     #"image_id" : "ami-8f3e8def",
-    "image_id": "ami-482b9328",
+    "image_id": "ami-c0aa10a0",
 
     # Launch specifications
     "spot_price" : ".12",                 # Has to be a string

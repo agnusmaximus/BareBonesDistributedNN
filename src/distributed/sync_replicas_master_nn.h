@@ -3,6 +3,19 @@
 
 #include "distributed_defines.h"
 
+static void testme() {
+    while (1) {}
+}
+static void testme2() {
+
+}
+static void testme3() {
+
+}
+static void testme4() {
+
+}
+
 class SyncReplicasMasterNN : public NN {
  public:
 
@@ -37,7 +50,9 @@ class SyncReplicasMasterNN : public NN {
 	gradients_recved = new_sync_queue<GradientReceiveRequest>();
 
 	// Thread for receiving gradients.
-	receive_gradients_thread = std::thread(&SyncReplicasMasterNN::ReceiveGradientsAsync, this);
+	for (int i = 0; i < N_RECEIVE_THREADS; i++) {
+	    receive_gradients_threads.push_back(std::thread(&SyncReplicasMasterNN::ReceiveGradientsAsync, this));
+	}
 
 	SetName();
 	exchange_names(name, MASTER_RANK);
@@ -72,7 +87,7 @@ class SyncReplicasMasterNN : public NN {
     }
 
 protected:
-    std::thread receive_gradients_thread;
+    std::vector<std::thread> receive_gradients_threads;
     std::string name;
 
     std::vector<MPI_Comm> layer_comms;
@@ -124,7 +139,7 @@ protected:
 
     bool DoneAccumulating(int *gradients_accumulated) {
 	bool done = true;
-	for (int i = 0; i < layers.size(); i++) {
+	for (int i = 0; i < layers.size()-1; i++) {
 	    done = done && (gradients_accumulated[i] >= n_to_collect);
 	}
 	return done;
@@ -166,7 +181,7 @@ protected:
 			  layers[r.layer]->NCols());
 	    }
 
-	    //PrintNumAccumulated(gradients_accumulated);
+	    PrintNumAccumulated(gradients_accumulated);
 
 	    // Return memory back to pool.
 	    push_thread_safe<double *>(memory_pool[r.layer], r.gradient);
@@ -179,6 +194,7 @@ protected:
 	// Initate requests for all layers.
 	std::vector<MPI_Request> requests(layers.size()-1);
 	std::vector<double *> memory(layers.size()-1);
+
 	for (int i = 0; i < layers.size()-1; i++) {
 	    double *mem = pop_thread_safe(memory_pool[i]);
 	    memory[i] = mem;
@@ -191,9 +207,8 @@ protected:
 	    int layer_received = -1;
 	    MPI_Status stat;
 	    MPI_Waitany(layers.size()-1, requests.data(), &layer_received, &stat);
+	    //WaitAnyReverse(requests, &layer_received, &stat);
 	    double *mem = memory[layer_received];
-
-	    //std::cout << "Master received gradient for layer " << layer_received << std::endl;
 
 	    // Add the gradient to the queue
 	    push_thread_safe<GradientReceiveRequest>(gradients_recved, {mem, layer_received, stat.MPI_TAG});
