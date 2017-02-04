@@ -16,4 +16,4 @@ distributed:
 
 distributed_run:
 	make distributed
-	mpirun -n 8 ./distributed_nn
+	sudo mpirun -n 8 --allow-run-as-root  ./distributed_nn

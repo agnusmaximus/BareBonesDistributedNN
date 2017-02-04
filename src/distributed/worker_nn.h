@@ -38,11 +38,15 @@ class WorkerNN : public NN {
 	assert(cur_step == STEP_START);
 
 	std::cout << "Worker " << rank << " starting training..." << std::endl;
+	bool first = true;
 
 	while (true) {
 
 	    AsynchronousFetchStepUpdate();
-	    UpdateStep();
+	    bool updated = UpdateStep();
+	    if (!updated && !first) continue;
+	    first = false;
+	    std::cout << rank << " " <<cur_step << std::endl;
 	    AsynchronousFetchWeights();
 	    FillNextBatch(data, labels, n_examples);
 
@@ -54,7 +58,7 @@ class WorkerNN : public NN {
 		// Handle short circuiting.
 #if SHORTCIRCUIT
 		if (StepChanged()) {
-		  std::cout << "SHORTCIRCUIT" << std::endl;
+		    std::cout << "SHORTCIRCUIT" << std::endl;
 		    break;
 	        }
 #endif
@@ -125,7 +129,7 @@ class WorkerNN : public NN {
     MPI_Request step_fetch_request;
 
     bool StepChanged() {
-	return cur_step != next_step;
+	return NewStepQueued() || cur_step != next_step;
     }
 
     // Returns whether fetched new step was different from cur step.
