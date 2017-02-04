@@ -19,6 +19,7 @@
 #include <condition_variable>
 #include <mpi.h>
 
+#define NAME_TAG 1
 #define STEP_TAG 0
 #define STEP_START 1
 #define STEP_UNINITIALIZED (STEP_START-1)
@@ -91,6 +92,23 @@ string scheme_full_name(string scheme_name, int n_to_collect, int n_procs) {
 	name += "_no_shortcircuit";
     }
     return name;
+}
+
+void exchange_names(string &name, int rank) {
+    if (rank == MASTER_RANK) {
+	MPI_Send(&name[0], name.size()+1, MPI_CHAR,
+		 EVALUATOR_RANK, NAME_TAG, MPI_COMM_WORLD);
+    }
+    else {
+	MPI_Status stat;
+	MPI_Probe(MASTER_RANK, NAME_TAG, MPI_COMM_WORLD, &stat);
+	int c = 0;
+	MPI_Get_count(&stat, MPI_CHAR, &c);
+	char name_holder[c];
+	std::cout << c << std::endl;
+	MPI_Recv(name_holder, c, MPI_CHAR, MASTER_RANK, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+	name = std::string(name_holder);
+    }
 }
 
 #endif

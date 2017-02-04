@@ -42,11 +42,12 @@ int main(void) {
     params->SetBatchsize(batch_size);
     params->AddLayer(batch_size, IMAGE_X*IMAGE_Y);
     params->AddLayer(IMAGE_X*IMAGE_Y, 100);
-    //params->AddLayer(100, 100);
-    //params->AddLayer(100, 100);
-    //params->AddLayer(100, 100);
+    params->AddLayer(100, 500);
+    params->AddLayer(500, 800);
+    params->AddLayer(800, 500);
+    params->AddLayer(500, 100);
     params->AddLayer(100, N_CLASSES);
-    params->SetLearningRate(1e-3);
+    params->SetLearningRate(1e-4);
 
     // Load data
     int number_of_images, number_of_test_images, image_size;
@@ -65,7 +66,7 @@ int main(void) {
     std::cout << "Machine launched: " << hostname << std::endl;
 
     if (rank == MASTER_RANK) {
-	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-2);
+	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-2-2);
 	master->Train(test_images, test_labels, number_of_test_images);
 	delete master;
     }

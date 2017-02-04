@@ -6,11 +6,14 @@
 class EvaluatorNN : public WorkerNN {
 public:
     EvaluatorNN(NNParams *params, std::vector<MPI_Comm> &layer_comms, int rank, int n_procs) : WorkerNN(params, layer_comms, rank, n_procs) {
-
+	exchange_names(name, EVALUATOR_RANK);
+	f_out.open("outfiles/" + name + "_time_loss_out");
+	std::cout << name << std::endl;
+	f_out << name << std::endl;
     }
 
     ~EvaluatorNN() {
-
+	f_out.close();
     }
 
     void Train(uchar **data, uchar *labels, int n_examples) override {
@@ -28,7 +31,8 @@ public:
 		double loss = ComputeLoss(data, labels, n_examples);
 		double err = ComputeErrorRate(data, labels, n_examples);
 		double t_elapsed = GetTimeMillis() - start_time;
-		std::cout << t_elapsed << " " << loss << " " << err << std::endl;
+		std::cout << local_step << " " << t_elapsed << " " << loss << " " << err << std::endl;
+		f_out << local_step << " " << t_elapsed << " " << loss << " " << err << std::endl;
 	    }
 	    else {
 		sleep(0);
@@ -36,6 +40,9 @@ public:
 	}
     }
 
+protected:
+    ofstream f_out;
+    string name;
 };
 
 #endif

@@ -38,6 +38,9 @@ class SyncReplicasMasterNN : public NN {
 
 	// Thread for receiving gradients.
 	receive_gradients_thread = std::thread(&SyncReplicasMasterNN::ReceiveGradientsAsync, this);
+
+	SetName();
+	exchange_names(name, MASTER_RANK);
     }
 
     ~SyncReplicasMasterNN() {
@@ -69,6 +72,7 @@ class SyncReplicasMasterNN : public NN {
 
 protected:
     std::thread receive_gradients_thread;
+    std::string name;
 
     std::vector<MPI_Comm> layer_comms;
     std::vector<MPI_Request> broadcast_master_step_requests;
@@ -197,6 +201,13 @@ protected:
 	    mem = pop_thread_safe<double *>(memory_pool[layer_received]);
 	    memory[layer_received] = mem;
 	    MPI_Irecv(mem, layers[layer_received]->GetLayerCount(), MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, layer_comms[layer_received], &requests[layer_received]);
+	}
+    }
+
+    void SetName() {
+	name = "NN_" + std::to_string(n_to_collect) + "_" + std::to_string(n_procs-2);
+	if (SHORTCIRCUIT) {
+	    name += "_shortcircuit";
 	}
     }
 };
