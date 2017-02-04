@@ -31,40 +31,51 @@
 #define GENERATE_TIMELINE false
 #define N_TRAIN_ITERS 100
 
+template <typename T>
 struct sync_queue {
-    std::queue<double *> q;
+    std::queue<T> q;
     std::mutex mtx;
     std::condition_variable cv;
 };
-typedef sync_queue sync_queue;
 
 //////////////////////////////////
 // Thread safe queue helpers    //
 //////////////////////////////////
 
-sync_queue * new_sync_queue() {
-    sync_queue *q = new sync_queue();
+template <typename T>
+sync_queue<T> * new_sync_queue() {
+    sync_queue<T> *q = new sync_queue<T>();
     return q;
 }
 
-void push_thread_safe(sync_queue *q, double *element) {
+template <typename T>
+void push_thread_safe(sync_queue<T> *q, T element) {
     std::unique_lock<std::mutex> lock(q->mtx);
     q->q.push(element);
     lock.unlock();
     q->cv.notify_all();
 }
 
-double * pop_thread_safe(sync_queue *q) {
+template <typename T>
+T pop_thread_safe(sync_queue<T> *q) {
     // Blocks on 0 elements.
     std::unique_lock<std::mutex> lock(q->mtx);
     while (q->q.empty()) {
 	q->cv.wait(lock);
     }
-    double *returnvalue = q->q.front();
+    T returnvalue = q->q.front();
     q->q.pop();
     return returnvalue;
 }
 
+///////////////////////////////////
+// Helpers for sending gradients //
+///////////////////////////////////
+struct GradientSendRequest {
+    double *gradient;
+    int layer;
+    int step;
+};
 
 string scheme_full_name(string scheme_name, int n_to_collect, int n_procs) {
 
