@@ -81,6 +81,12 @@ public:
 
 		// Forward propagation
 		for (int i = 0; i < layers.size(); i++) {
+#if SHORTCIRCUIT
+		    if (LocalStepDifferentFromMasterStep()) {
+			std::cout << "SHORTCIRCUITING" << std::endl;
+			break;
+		    }
+#endif
 		    if (i != layers.size()-1) {
 
 			// Wait to receive layers of the current step.
@@ -95,6 +101,12 @@ public:
 
 		// Backpropagation
 		for (int i = layers.size()-1; i >= 0; i--) {
+#if SHORTCIRCUIT
+		    if (LocalStepDifferentFromMasterStep()) {
+			std::cout << "SHORTCIRCUITING" << std::endl;
+			break;
+		    }
+#endif
 		    layers[i]->BackPropagateCore(batch_labels_placeholder);
 
 		    if (i != layers.size()-1) {
@@ -106,6 +118,8 @@ public:
 			push_thread_safe<GradientSendRequest>(gradients_to_send, (GradientSendRequest){mem, i, local_step});
 		    }
 		}
+
+		std::cout << "Worker " << rank << " finished iteration " << local_step << std::endl;
 	    }
 	    sleep(0);
 	}

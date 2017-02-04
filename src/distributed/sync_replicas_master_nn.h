@@ -65,6 +65,7 @@ class SyncReplicasMasterNN : public NN {
 	    BroadcastWeights();
 	    WaitForAccumulatedGradients();
 	    ApplyAllGradients();
+	    std::cout << "Master finished iteration " << master_step << std::endl;
 	    master_step++;
 	}
 	while (true) { sleep(0); }
