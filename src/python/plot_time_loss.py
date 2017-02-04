@@ -26,7 +26,7 @@ def plot_time_loss(fname):
     plt.plot(times, losses, label=name)
 
 workdir = sys.argv[1]
-for filename in glob.glob(workdir + "/time_loss_out*"):
+for filename in glob.glob(workdir + "/*time_loss_out*"):
     plot_time_loss(filename)
 plt.legend(loc="upper right", fontsize=8)
 plt.xlabel("Time (ms)", fontsize=10)

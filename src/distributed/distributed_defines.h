@@ -81,19 +81,6 @@ struct GradientSendRequest {
 
 typedef struct GradientSendRequest GradientReceiveRequest;
 
-string scheme_full_name(string scheme_name, int n_to_collect, int n_procs) {
-
-    // -2 for master and evaluator
-    string name = scheme_name + std::to_string(n_to_collect) + "_"  + std::to_string(n_procs-2);
-    if (SHORTCIRCUIT) {
-	name += "_shortcircuit";
-    }
-    else {
-	name += "_no_shortcircuit";
-    }
-    return name;
-}
-
 void exchange_names(string &name, int rank) {
     if (rank == MASTER_RANK) {
 	MPI_Send(&name[0], name.size()+1, MPI_CHAR,
