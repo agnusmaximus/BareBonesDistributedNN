@@ -19,6 +19,9 @@ public:
     void Train(uchar **data, uchar *labels, int n_examples) override {
 	double start_time = GetTimeMillis();
 	while (true) {
+	    sleep(0);
+	}
+	while (true) {
 	    if (LocalStepDifferentFromMasterStep()) {
 		UpdateLocalStep();
 		for (int i = 0; i < layers.size(); i++) {

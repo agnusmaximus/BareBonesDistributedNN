@@ -39,7 +39,7 @@ public:
 	local_step_update_thread = std::thread(&WorkerNN::UpdateLocalStepAsync, this);
 
 	// Launch thread for sending the gradients
-	send_gradients_thread = std::thread(&WorkerNN::SendGradientsAsync, this);
+	//send_gradients_thread = std::thread(&WorkerNN::SendGradientsAsync, this);
 
 	// Launch thread for receiving the layer weights
 	weights_update_thread = std::thread(&WorkerNN::UpdateWeightsAsync, this);
@@ -115,7 +115,9 @@ public:
 			double *mem = pop_thread_safe(memory_pool[i]);
 			memcpy(mem, layers[i]->GetGradient(), sizeof(double) * layers[i]->GetLayerCount());
 
-			push_thread_safe<GradientSendRequest>(gradients_to_send, (GradientSendRequest){mem, i, local_step});
+			//push_thread_safe<GradientSendRequest>(gradients_to_send, (GradientSendRequest){mem, i, local_step});
+			MPI_Send(mem, layers[i]->GetLayerCount(), MPI_DOUBLE,
+				 MASTER_RANK, local_step, layer_comms[i]);
 		    }
 		}
 

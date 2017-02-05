@@ -3,19 +3,6 @@
 
 #include "distributed_defines.h"
 
-static void testme() {
-    while (1) {}
-}
-static void testme2() {
-
-}
-static void testme3() {
-
-}
-static void testme4() {
-
-}
-
 class SyncReplicasMasterNN : public NN {
  public:
 

@@ -26,7 +26,7 @@
 #define MASTER_RANK 0
 #define EVALUATOR_RANK 1
 #define POOL_SIZE 100
-#define N_RECEIVE_THREADS 10
+#define N_RECEIVE_THREADS 5
 #ifndef SHORTCIRCUIT
 #define SHORTCIRCUIT true
 #endif

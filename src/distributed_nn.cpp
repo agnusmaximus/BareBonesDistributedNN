@@ -66,7 +66,7 @@ int main(void) {
     std::cout << "Machine launched: " << hostname << std::endl;
 
     if (rank == MASTER_RANK) {
-	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-2-5);
+	SyncReplicasMasterNN *master = new SyncReplicasMasterNN(params, layer_comms, n_procs, n_procs-2);
 	master->Train(test_images, test_labels, number_of_test_images);
 	delete master;
     }
