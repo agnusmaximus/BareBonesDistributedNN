@@ -29,38 +29,38 @@ cfg = Cfg({
 
     # Cluster topology
     "n_masters" : 1,                      # Should always be 1
-    "n_workers" : 20,
+    "n_workers" : 45,
     "n_ps" : 1,
     "n_evaluators" : 1,                   # Continually validates the model on the validation data
     "num_replicas_to_aggregate" : "4",
 
-     "method" : "reserved",
+     "method" : "spot",
 
     # Region speficiation
     "region" : "us-west-2",
     "availability_zone" : "us-west-2b",
 
     # Machine type - instance type configuration.
-    "master_type" : "t2.small",
-    "worker_type" : "t2.small",
-    "ps_type" : "t2.small",
-    "evaluator_type" : "t2.small",
+    "master_type" : "m3.medium",
+    "worker_type" : "m3.medium",
+    "ps_type" : "m3.medium",
+    "evaluator_type" : "m3.medium",
     #"image_id" : "ami-8f3e8def",
     "image_id": "ami-c0aa10a0",
 
     # Launch specifications
-    "spot_price" : ".12",                 # Has to be a string
+    "spot_price" : ".015",                 # Has to be a string
 
     # SSH configuration
     "ssh_username" : "ubuntu",            # For sshing. E.G: ssh ssh_username@hostname
-    "path_to_keyfile" : "/Users/maxlam/Desktop/School/Fall2016/Research/DistributedSGD/DistributedSGD.pem",
+    "path_to_keyfile" : "/Users/maxlam/Desktop/School/Fall2016/Research/DistributedSGD/MaxLamKeyPair.pem",
 
     # NFS configuration
     # To set up these values, go to Services > ElasticFileSystem > Create new filesystem, and follow the directions.
-    #"nfs_ip_address" : "172.31.3.173",         # us-west-2c
-    #"nfs_ip_address" : "172.31.35.0",          # us-west-2a
-    "nfs_ip_address" : "172.31.28.54",          # us-west-2b
-    "nfs_mount_point" : "/home/ubuntu/inception_shared",       # NFS base dir
+    #"nfs_ip_address" : "172.31.6.18",         # us-west-2c
+    #"nfs_ip_address" : "172.31.38.15",          # us-west-2a
+    "nfs_ip_address" : "172.31.30.114",          # us-west-2b
+    "nfs_mount_point" : "/home/ubuntu/maxlam_nfs",       # NFS base dir
     "base_out_dir" : "%(nfs_mount_point)s/%(name)s", # Master writes checkpoints to this directory. Outfiles are written to this directory.
 
     "setup_commands" :
